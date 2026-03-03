@@ -1,6 +1,7 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.tasks.PrepareSandboxTask
 
@@ -233,6 +234,18 @@ tasks {
                 "-Dtalon.http.port=8666",
 //                "-XX:StartFlightRecording:filename=recording.jfr,duration=30s"
             )
+        }
+    }
+    val runRider by intellijPlatformTesting.runIde.registering {
+        type = IntelliJPlatformType.Rider
+        useInstaller = false
+        task{
+            jvmArgumentProviders += CommandLineArgumentProvider {
+                listOf(
+                    "-Dtalon.http.port=8666",
+//                "-XX:StartFlightRecording:filename=recording.jfr,duration=30s"
+                )
+            }
         }
     }
 
