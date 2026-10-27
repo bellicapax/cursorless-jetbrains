@@ -33,7 +33,7 @@ class CursorlessExecuteCommand(project: Project, private val jsonObjects: List<J
     }
 
     override fun execute(context: CommandContext): String {
-        return executeForResult(context)?.toString() ?: "OK"
+        return (executeForResult(context) as? JsonObject)?.get("returnValue")?.toString() ?: "OK"
     }
 
     override fun executeForResult(context: CommandContext): JsonElement? {
@@ -43,8 +43,13 @@ class CursorlessExecuteCommand(project: Project, private val jsonObjects: List<J
         if (!result.success) {
             throw RuntimeException(result.error ?: "Cursorless command execution failed")
         }
-        // Pass the engine's value through as JSON: Talon expects e.g. ["main"], not the string "[\"main\"]"
-        return result.returnValue
+        // Pass the engine's response through as JSON: Talon expects e.g. {"returnValue": ["main"]}, not a string,
+        // and {"fallback": …} when focus is outside the editor
+        return when {
+            result.fallback != null -> JsonObject(mapOf("fallback" to result.fallback))
+            result.returnValue != null -> JsonObject(mapOf("returnValue" to result.returnValue))
+            else -> JsonObject(emptyMap())
+        }
     }
 
     override fun toString(): String {

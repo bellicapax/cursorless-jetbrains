@@ -11566,17 +11566,54 @@ var JetbrainsHats = class {
   }
 };
 
+// src/ide/JetbrainsTalonSpokenForms.ts
+var LATEST_SPOKEN_FORMS_JSON_VERSION = 0;
+var NEWER_SPOKEN_FORMS_JSON_VERSION = 1;
+var JetbrainsTalonSpokenForms = class {
+  constructor(client) {
+    this.client = client;
+    this.notifier = new Notifier();
+    this.onDidChange = this.notifier.registerListener;
+  }
+  notifyChanged() {
+    this.notifier.notifyListeners();
+  }
+  async getSpokenFormEntries() {
+    const stateJson = this.client.readTalonSpokenForms();
+    if (stateJson == null) {
+      throw new NeedsInitialTalonUpdateError(
+        "Custom spoken forms file (~/.cursorless/state.json) not found. Using default spoken forms."
+      );
+    }
+    const payload = JSON.parse(stateJson);
+    if (payload.version === NEWER_SPOKEN_FORMS_JSON_VERSION) {
+      const supported32 = SUPPORTED_ENTRY_TYPES;
+      return payload.spokenForms.filter(
+        (entry) => supported32.includes(entry.type)
+      );
+    }
+    if (payload.version !== LATEST_SPOKEN_FORMS_JSON_VERSION) {
+      throw new Error(
+        `Invalid spoken forms version. Expected ${LATEST_SPOKEN_FORMS_JSON_VERSION} but got ${payload.version}`
+      );
+    }
+    return payload.spokenForms;
+  }
+};
+
 // src/ide/JetbrainsPlugin.ts
 var JetbrainsPlugin = class {
-  constructor(client, ide2, hats) {
+  constructor(client, ide2, hats, talonSpokenForms) {
     this.client = client;
     this.ide = ide2;
     this.hats = hats;
+    this.talonSpokenForms = talonSpokenForms;
   }
 };
 function createPlugin(client, ide2) {
   const hats = new JetbrainsHats(client);
-  return new JetbrainsPlugin(client, ide2, hats);
+  const talonSpokenForms = new JetbrainsTalonSpokenForms(client);
+  return new JetbrainsPlugin(client, ide2, hats, talonSpokenForms);
 }
 
 // src/ide/JetbrainsConfiguration.ts
@@ -11677,14 +11714,15 @@ var JetbrainsMessages = class {
 
 // src/ide/JetbrainsKeyValueStore.ts
 var JetbrainsKeyValueStore = class {
-  constructor() {
-    this.data = { ...KEY_VALUE_STORE_DEFAULTS };
+  constructor(client) {
+    this.client = client;
   }
   get(key) {
-    return this.data[key];
+    const valueJson = this.client.keyValueGet(key);
+    return valueJson == null ? KEY_VALUE_STORE_DEFAULTS[key] : JSON.parse(valueJson);
   }
   set(key, value) {
-    this.data[key] = value;
+    this.client.keyValueSet(key, JSON.stringify(value));
     return Promise.resolve();
   }
 };
@@ -12333,7 +12371,7 @@ var JetbrainsIDE = class {
     this.onDidChangeTextEditorSelection = dummyEvent;
     this.onDidChangeTextEditorVisibleRanges = dummyEvent;
     this.configuration = configuration;
-    this.keyValueStore = new JetbrainsKeyValueStore();
+    this.keyValueStore = new JetbrainsKeyValueStore(this.client);
     this.messages = new JetbrainsMessages();
     this.clipboard = new JetbrainsClipboard(this.client);
     this.capabilities = new JetbrainsCapabilities();
@@ -12413,8 +12451,8 @@ var JetbrainsIDE = class {
   async openUntitledTextDocument(_options) {
     throw Error("openUntitledTextDocument Not implemented");
   }
-  async showInputBox(_options) {
-    throw Error("showInputBox Not implemented");
+  async showInputBox(options2) {
+    return this.client.showInputBox(JSON.stringify(options2 ?? {})) ?? void 0;
   }
   async executeCommand(command, ...args2) {
     const editorId = this.activeEditor?.id;
@@ -47400,7 +47438,24 @@ var JetbrainsCommandServer = class {
     this.client = client;
   }
   getFocusedElementType() {
-    return Promise.resolve(void 0);
+    const type2 = this.client.getFocusedElementType();
+    return Promise.resolve(
+      type2 == null ? void 0 : type2
+    );
+  }
+};
+
+// src/ide/JetbrainsSnippets.ts
+var JetbrainsSnippets = class {
+  constructor(client, ide2) {
+    this.client = client;
+    this.ide = ide2;
+  }
+  async openNewSnippetFile(snippetName, directory) {
+    const editorState = JSON.parse(
+      this.client.openSnippetFile(snippetName, directory)
+    );
+    return this.ide.updateTextEditors(editorState);
   }
 };
 
@@ -47421,7 +47476,9 @@ async function activate(plugin, wasmDirectory) {
     hats: plugin.hats,
     treeSitterQueryProvider: queryProvider,
     treeSitter: new JetbrainsTreeSitter(wasmDirectory),
-    commandServerApi
+    commandServerApi,
+    talonSpokenForms: plugin.talonSpokenForms,
+    snippets: new JetbrainsSnippets(plugin.client, plugin.ide)
   });
   console.log("activate completed");
   return engine;

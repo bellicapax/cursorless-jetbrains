@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
@@ -49,6 +50,7 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
@@ -548,7 +550,7 @@ class TestCursorlessActions : BasePlatformTestCase() {
         val response = FileCommandServer().buildResponse(request, fixture.project)
 
         assertNull(response.error)
-        assertEquals(JsonArray(listOf(JsonPrimitive("main"))), response.returnValue.returnValue)
+        assertEquals(JsonArray(listOf(JsonPrimitive("main"))), (response.returnValue as JsonObject)["returnValue"])
         assertTrue(
             Json.encodeToString(response).contains(""""returnValue":{"returnValue":["main"]}""")
         )
@@ -626,6 +628,28 @@ class TestCursorlessActions : BasePlatformTestCase() {
         // Toggling is asynchronous in recent platform versions
         await.atMost(3, TimeUnit.SECONDS).until {
             breakpointManager.allBreakpoints.mapNotNull { (it as? XLineBreakpoint<*>)?.line } == listOf(4)
+        }
+    }
+
+    @Test
+    fun testSnipMakeOpensNewSnippetFile() {
+        val fixture = mainJavaFixture()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+        val snippetsDir = Files.createTempDirectory("cursorless-snippets")
+        VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, snippetsDir.toString())
+
+        // With snippetName given, the engine skips the name prompt
+        val res = fixture.projectService.cursorlessEngine.executeCommand(
+            listOf(actionCommand("""{"name": "generateSnippet", "target": ${targetJson(target)}, "directory": ${Json.encodeToString(snippetsDir.toString())}, "snippetName": "printSnippet"}"""))
+        )
+
+        assertNull(res.error)
+        val snippetPath = snippetsDir.resolve("printSnippet.snippet")
+        assertTrue("snippet file should exist", Files.exists(snippetPath))
+        runInEdtAndWait {
+            val editor = FileEditorManager.getInstance(fixture.project).selectedTextEditor!!
+            assertEquals(snippetPath.toFile().canonicalPath, FileDocumentManager.getInstance().getFile(editor.document)?.path?.let { java.io.File(it).canonicalPath })
+            assertTrue(editor.document.text, editor.document.text.contains("println"))
         }
     }
 

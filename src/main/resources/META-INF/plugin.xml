@@ -18,6 +18,9 @@
         <applicationService
                 serviceImplementation="com.github.asoee.cursorlessjetbrains.settings.TalonSettings"/>
 
+        <applicationService
+                serviceImplementation="com.github.asoee.cursorlessjetbrains.settings.CursorlessKeyValueStore"/>
+
         <postStartupActivity
                 implementation="com.github.asoee.cursorlessjetbrains.listeners.TalonProjectActivity"/>
 
