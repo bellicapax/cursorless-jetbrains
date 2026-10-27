@@ -1,8 +1,8 @@
 # cursorless-jetbrains
 
 ![Build](https://github.com/asoee/cursorless-jetbrains/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
+[![Version](https://img.shields.io/jetbrains/plugin/v/28086.svg)](https://plugins.jetbrains.com/plugin/28086-talon-cursorless-everywhere)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/28086.svg)](https://plugins.jetbrains.com/plugin/28086-talon-cursorless-everywhere)
 
 ## Description
 
@@ -21,7 +21,7 @@ recent version of Intellij.
 2. install the Community voice command set (https://github.com/talonhub/community)
 3. install the talon side of cursorless: https://www.cursorless.org/docs/user/installation/#installing-the-talon-side
 4. to the same .talon/user folder, clone https://github.com/asoee/cursorless-jetbrains-talon
-5. open JetBrains and install the talon-cursorless-everywhere plugin
+5. open JetBrains and install the talon-cursorless-everywhere plugin (https://plugins.jetbrains.com/plugin/28086-talon-cursorless-everywhere)
 6. maybe(?) restart JetBrains + Talon
 
 ## Usage
