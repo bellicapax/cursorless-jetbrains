@@ -5,12 +5,17 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import java.awt.Component
 
 
-class IDEActionCommand(project: Project, private val actionId: String) : VcCommand(project) {
+class IDEActionCommand @JvmOverloads constructor(
+    project: Project,
+    private val actionId: String,
+    private val editor: Editor? = null,
+) : VcCommand(project) {
 
     companion object {
         fun fromArgs(project: Project, args: List<String>): IDEActionCommand? {
@@ -61,7 +66,10 @@ class IDEActionCommand(project: Project, private val actionId: String) : VcComma
     }
 
     override fun execute(context: CommandContext): String {
-        val component = findComponent(context)
+        if (editor != null) {
+            context.editor = editor
+        }
+        val component = if (editor != null) editor.contentComponent else findComponent(context)
 
         ActionManager.getInstance()
             .tryToExecute(action, null, component, ActionPlaces.UNKNOWN, true)

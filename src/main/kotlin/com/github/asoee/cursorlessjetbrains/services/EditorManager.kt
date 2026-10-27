@@ -325,17 +325,15 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         }
 
         override fun executeCommand(editorId: String, command: String, args: Array<String>) {
-            val actionsArgs = listOf(command) + args.toList()
-            editorManager.editorsById[editorId]?.let { editor ->
-                editor.project?.let { project ->
-                    val request = CommandRequest(project, "action", actionsArgs)
-                    thisLogger().info("Executing command $request")
-                    service<CommandRegistryService>().getCommand(request)?.let {
-                        thisLogger().info("Found command $it")
-                        service<CommandExecutorService>().execute(it)
-                    }
-                }
+            thisLogger().info("Executing IDE action $command for $editorId")
+            val editor = editorManager.editorsById[editorId]
+                ?: throw IllegalStateException("No editor $editorId to run $command in")
+            val project = editor.project ?: throw IllegalStateException("Editor $editorId has no project")
+            // Throwing rejects the Cursorless command, so Talon reports the bad action id instead of doing nothing
+            if (ActionManager.getInstance().getAction(command) == null) {
+                throw IllegalArgumentException("Unknown IDE action: $command")
             }
+            service<CommandExecutorService>().execute(IDEActionCommand(project, command, editor))
         }
 
         override fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand) {
@@ -413,6 +411,30 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
 
         override fun prePhraseVersion(): String? {
             return service<FileCommandServerService>().commandServer.prePhraseVersion()
+        }
+
+        override fun findInDocument(editorId: String, query: String) {
+            showFind(editorId, query, false)
+        }
+
+        override fun findInWorkspace(editorId: String, query: String) {
+            showFind(editorId, query, true)
+        }
+
+        private fun showFind(editorId: String, query: String, inProject: Boolean) {
+            editorManager.editorsById[editorId]?.let { editor ->
+                editor.project?.let { project ->
+                    service<CommandExecutorService>().execute(ShowFindCommand(project, editor, query, inProject))
+                }
+            }
+        }
+
+        override fun focusEditor(editorId: String) {
+            editorManager.editorsById[editorId]?.let { editor ->
+                editor.project?.let { project ->
+                    service<CommandExecutorService>().execute(FocusEditorCommand(project, editor))
+                }
+            }
         }
 
         override fun documentUpdated(editorId: String, edit: CursorlessEditorEdit) {

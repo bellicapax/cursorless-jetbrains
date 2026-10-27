@@ -6,6 +6,7 @@ import com.github.asoee.cursorlessjetbrains.commandserver.file.FileCommandServer
 import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorServiceTest.MainJavaFixture
 import com.github.asoee.cursorlessjetbrains.cursorless.*
 import com.github.asoee.cursorlessjetbrains.services.TalonProjectService
+import com.intellij.find.EditorSearchSession
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.CaretState
@@ -32,12 +33,15 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import junit.framework.TestCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import org.awaitility.kotlin.await
@@ -547,6 +551,91 @@ class TestCursorlessActions : BasePlatformTestCase() {
         assertEquals(JsonArray(listOf(JsonPrimitive("main"))), response.returnValue.returnValue)
         assertTrue(
             Json.encodeToString(response).contains(""""returnValue":{"returnValue":["main"]}""")
+        )
+    }
+
+    @Test
+    fun testCustomIdeCommandRunsActionOnTarget() {
+        val fixture = mainJavaFixture()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+
+        val res = fixture.projectService.cursorlessEngine.executeCommand(
+            listOf(actionCommand("""{"name": "executeCommand", "commandId": "CommentByLineComment", "target": ${targetJson(target)}}"""))
+        )
+
+        assertNull(res.error)
+        runInEdtAndWait {
+            assertEquals("//        System.out.println(\"Hello IDEA welcome!\");", getTextFromLine(fixture.editor, 4))
+        }
+    }
+
+    @Test
+    fun testCustomIdeCommandRejectsUnknownAction() {
+        val fixture = mainJavaFixture()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+
+        val res = fixture.projectService.cursorlessEngine.executeCommand(
+            listOf(actionCommand("""{"name": "executeCommand", "commandId": "NoSuchAction", "target": ${targetJson(target)}}"""))
+        )
+
+        assertFalse(res.success)
+        assertTrue("error was ${res.error}", res.error?.contains("Unknown IDE action: NoSuchAction") == true)
+    }
+
+    @Test
+    fun testScoutOpensFindWithTargetText() {
+        val fixture = mainJavaFixture()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 3, 23, 3, 27))
+
+        val res = fixture.projectService.cursorlessEngine.executeCommand(
+            listOf(actionCommand("""{"name": "findInDocument", "target": ${targetJson(target)}}"""))
+        )
+
+        assertNull(res.error)
+        runInEdtAndWait {
+            val session = EditorSearchSession.get(fixture.editor)
+            assertNotNull("find bar should be open", session)
+            assertEquals("main", session!!.textInField)
+        }
+    }
+
+    @Test
+    fun testHoverActionsAreSupported() {
+        val fixture = mainJavaFixture()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+
+        for (action in listOf("showHover", "showDebugHover")) {
+            val res = fixture.projectService.cursorlessEngine.executeCommand(
+                listOf(actionCommand("""{"name": "$action", "target": ${targetJson(target)}}"""))
+            )
+            assertTrue("$action failed: ${res.error}", res.success)
+        }
+    }
+
+    @Test
+    fun testBreakPointTogglesLineBreakpoint() {
+        val fixture = mainJavaFixture()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+        val breakpointManager = XDebuggerManager.getInstance(fixture.project).breakpointManager
+
+        val res = fixture.projectService.cursorlessEngine.executeCommand(
+            listOf(actionCommand("""{"name": "toggleLineBreakpoint", "target": ${targetJson(target)}}"""))
+        )
+
+        assertTrue("toggleLineBreakpoint failed: ${res.error}", res.success)
+        // Toggling is asynchronous in recent platform versions
+        await.atMost(3, TimeUnit.SECONDS).until {
+            breakpointManager.allBreakpoints.mapNotNull { (it as? XLineBreakpoint<*>)?.line } == listOf(4)
+        }
+    }
+
+    private fun targetJson(target: CursorlessTarget): String {
+        return """{"type": "primitive", "mark": {"type": "decoratedSymbol", "symbolColor": "${target.color}", "character": "${target.letter}"}}"""
+    }
+
+    private fun actionCommand(actionJson: String): JsonObject {
+        return Json.decodeFromString<JsonObject>(
+            """{"version": 7, "spokenForm": "test", "usePrePhraseSnapshot": false, "action": $actionJson}"""
         )
     }
 
