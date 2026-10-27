@@ -237,8 +237,9 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         logger.info("Applying ${edit.changes.size} Cursorless change(s) to $editorId")
         ApplicationManager.getApplication().invokeAndWait {
             val document = editor.document
+            // requestWriting runs the IDE's read-only handling, e.g. a Perforce checkout, as typing would.
             // Throwing here rejects the command in the engine, so Talon gets an error instead of a silent no-op
-            if (!document.isWritable) {
+            if (!FileDocumentManager.getInstance().requestWriting(document, editor.project)) {
                 val fileName = FileDocumentManager.getInstance().getFile(document)?.name ?: editorId
                 throw IllegalStateException("Cannot edit read-only file $fileName")
             }
