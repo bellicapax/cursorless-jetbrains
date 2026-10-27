@@ -17,4 +17,7 @@ interface CursorlessCallback {
     fun flashRanges(flashRanges: Array<CursorlessFlashRange>)
     fun setHighlightRanges(highlightId: String?, editorId: String, ranges: Array<CursorlessGeneralizedRange>)
     fun prePhraseVersion(): String?
+    fun findInDocument(editorId: String, query: String)
+    fun findInWorkspace(editorId: String, query: String)
+    fun focusEditor(editorId: String)
 }

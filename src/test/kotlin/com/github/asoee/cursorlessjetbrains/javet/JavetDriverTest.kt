@@ -312,4 +312,13 @@ class CountingCallback : CursorlessCallback {
 //        println("Not yet implemented")
         return "asdf" + System.currentTimeMillis()
     }
+
+    override fun findInDocument(editorId: String, query: String) {
+    }
+
+    override fun findInWorkspace(editorId: String, query: String) {
+    }
+
+    override fun focusEditor(editorId: String) {
+    }
 }

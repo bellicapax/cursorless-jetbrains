@@ -11610,8 +11610,8 @@ var COMMAND_CAPABILITIES = {
   quickFix: { acceptsLocation: true },
   revealDefinition: { acceptsLocation: true },
   revealTypeDefinition: { acceptsLocation: true },
-  showHover: void 0,
-  showDebugHover: void 0,
+  showHover: { acceptsLocation: true },
+  showDebugHover: { acceptsLocation: true },
   extractVariable: { acceptsLocation: true },
   fold: { acceptsLocation: true },
   highlight: { acceptsLocation: true },
@@ -12123,8 +12123,8 @@ var JetbrainsEditor = class {
   async insertLineAfter(ranges) {
     await this.client.insertLineAfter(this.id, JSON.stringify(ranges));
   }
-  focus() {
-    throw new Error("focus not implemented.");
+  async focus() {
+    await this.client.focusEditor(this.id);
   }
   revealRange(_range) {
     return Promise.resolve();
@@ -12159,8 +12159,17 @@ var JetbrainsEditor = class {
     );
     await this.client.executeRangeCommand(this.id, JSON.stringify(command));
   }
-  async toggleBreakpoint(_ranges) {
-    throw new Error("toggleBreakpoint not implemented.");
+  async toggleBreakpoint(ranges) {
+    for (const range3 of ranges ?? []) {
+      const position = range3.type === "line" ? new Position(range3.start, 0) : range3.start;
+      const command = new JetbrainsEditorCommand(
+        [new Range(position, position)],
+        true,
+        false,
+        "ToggleLineBreakpoint"
+      );
+      await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    }
   }
   async toggleLineComment(ranges) {
     const command = new JetbrainsEditorCommand(
@@ -12223,11 +12232,23 @@ var JetbrainsEditor = class {
     );
     await this.client.executeRangeCommand(this.id, JSON.stringify(command));
   }
-  showHover(_range) {
-    throw new Error("showHover not implemented.");
+  async showHover(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "QuickJavaDoc"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
   }
-  showDebugHover(_range) {
-    throw new Error("showDebugHover not implemented.");
+  async showDebugHover(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "QuickEvaluateExpression"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
   }
   async extractVariable(range3) {
     const command = new JetbrainsEditorCommand(
@@ -12372,11 +12393,19 @@ var JetbrainsIDE = class {
     }
     throw Error(`Unsupported text editor type: ${editor}`);
   }
-  async findInDocument(_query, _editor) {
-    throw Error("findInDocument Not implemented");
+  async findInDocument(query, editor) {
+    const editorId = (editor ?? this.activeEditor)?.id;
+    if (editorId == null) {
+      throw Error("findInDocument: no editor to search in");
+    }
+    this.client.findInDocument(editorId, query);
   }
-  async findInWorkspace(_query) {
-    throw Error("findInWorkspace Not implemented");
+  async findInWorkspace(query) {
+    const editorId = this.activeEditor?.id;
+    if (editorId == null) {
+      throw Error("findInWorkspace: no active editor");
+    }
+    this.client.findInWorkspace(editorId, query);
   }
   async openTextDocument(_path) {
     throw Error("openTextDocument Not implemented");
@@ -12387,8 +12416,13 @@ var JetbrainsIDE = class {
   async showInputBox(_options) {
     throw Error("showInputBox Not implemented");
   }
-  async executeCommand(_command, ..._args) {
-    throw new Error("executeCommand Method not implemented.");
+  async executeCommand(command, ...args2) {
+    const editorId = this.activeEditor?.id;
+    if (editorId == null) {
+      throw Error(`executeCommand ${command}: no active editor`);
+    }
+    this.client.executeCommand(editorId, command, JSON.stringify(args2));
+    return void 0;
   }
   onDidChangeTextDocument(listener) {
     return this.onDidChangeTextDocumentNotifier.registerListener(listener);
