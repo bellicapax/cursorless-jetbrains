@@ -148,14 +148,14 @@ class FileCommandServer {
                 request.uuid,
                 emptyArray(),
                 null,
-                TalonCommandReponse(result.returnValue),
+                result.returnValue,
             )
         } else {
             CommandServerResponse(
                 request.uuid,
                 emptyArray(),
                 result.error ?: "Unknown error",
-                TalonCommandReponse(null),
+                null,
             )
         }
     }

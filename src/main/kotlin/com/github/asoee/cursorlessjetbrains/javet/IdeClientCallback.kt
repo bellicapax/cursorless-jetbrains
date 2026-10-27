@@ -87,6 +87,30 @@ class IdeClientCallback {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
 
+        override fun getFocusedElementType(): String? {
+            return null
+        }
+
+        override fun keyValueGet(key: String): String? {
+            return null
+        }
+
+        override fun keyValueSet(key: String, valueJson: String) {
+            println("ASOEE/PLUGIN: CursorlessCallback not set")
+        }
+
+        override fun readTalonSpokenForms(): String? {
+            return null
+        }
+
+        override fun showInputBox(optionsJson: String): String? {
+            return null
+        }
+
+        override fun openSnippetFile(snippetName: String, directory: String): String {
+            throw IllegalStateException("CursorlessCallback not set")
+        }
+
     }
 
 
@@ -200,6 +224,39 @@ class IdeClientCallback {
     fun focusEditor(editorId: String) {
         logger.info("IdeClientCallback.focusEditor: $editorId")
         cursorlessCallback.focusEditor(editorId)
+    }
+
+    @V8Function
+    fun getFocusedElementType(): String? {
+        return cursorlessCallback.getFocusedElementType()
+    }
+
+    @V8Function
+    fun keyValueGet(key: String): String? {
+        return cursorlessCallback.keyValueGet(key)
+    }
+
+    @V8Function
+    fun keyValueSet(key: String, valueJson: String) {
+        logger.info("IdeClientCallback.keyValueSet: $key")
+        cursorlessCallback.keyValueSet(key, valueJson)
+    }
+
+    @V8Function
+    fun readTalonSpokenForms(): String? {
+        return cursorlessCallback.readTalonSpokenForms()
+    }
+
+    @V8Function
+    fun showInputBox(optionsJson: String): String? {
+        logger.info("IdeClientCallback.showInputBox: $optionsJson")
+        return cursorlessCallback.showInputBox(optionsJson)
+    }
+
+    @V8Function
+    fun openSnippetFile(snippetName: String, directory: String): String {
+        logger.info("IdeClientCallback.openSnippetFile: $snippetName in $directory")
+        return cursorlessCallback.openSnippetFile(snippetName, directory)
     }
 
     @V8Function

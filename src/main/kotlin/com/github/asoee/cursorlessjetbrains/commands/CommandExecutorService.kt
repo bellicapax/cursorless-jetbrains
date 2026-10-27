@@ -5,6 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
 @Service(Service.Level.PROJECT)
@@ -20,7 +21,7 @@ class CommandExecutorService {
     fun executeForResult(command: VcCommand): JsonElement? {
         if (command.invokeOnly()) {
             run(command) { context -> command.executeForResult(context) }
-            return JsonPrimitive("")
+            return JsonObject(mapOf("returnValue" to JsonPrimitive("")))
         }
         return run(command) { context -> command.executeForResult(context) }
     }

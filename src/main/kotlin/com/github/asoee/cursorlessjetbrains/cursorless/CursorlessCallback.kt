@@ -20,4 +20,10 @@ interface CursorlessCallback {
     fun findInDocument(editorId: String, query: String)
     fun findInWorkspace(editorId: String, query: String)
     fun focusEditor(editorId: String)
+    fun getFocusedElementType(): String?
+    fun keyValueGet(key: String): String?
+    fun keyValueSet(key: String, valueJson: String)
+    fun readTalonSpokenForms(): String?
+    fun showInputBox(optionsJson: String): String?
+    fun openSnippetFile(snippetName: String, directory: String): String
 }
