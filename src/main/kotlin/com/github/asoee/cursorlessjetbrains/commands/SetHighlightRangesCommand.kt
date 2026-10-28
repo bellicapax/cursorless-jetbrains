@@ -69,9 +69,13 @@ class SetHighlightRangesCommand(
     override fun execute(context: CommandContext): String {
         // Clear existing highlights for this highlightId and editor
         val key = Pair(highlightId, editor)
-        val existingHighlights = activeHighlights[key]
-        
-        ApplicationManager.getApplication().invokeAndWait {
+
+        // Queue rather than wait: this is called from inside the JS engine, which may be redrawing the scope
+        // visualizer on a background thread while the UI thread waits to enter the engine. invokeLater keeps
+        // updates in order, so a later clear still runs after an earlier draw.
+        ApplicationManager.getApplication().invokeLater {
+            val existingHighlights = activeHighlights[key]
+
             // Remove existing highlights
             existingHighlights?.forEach { highlighter ->
                 if (!editor.isDisposed) {
@@ -83,7 +87,7 @@ class SetHighlightRangesCommand(
             // If ranges is empty, just clear highlights (user said "highlight nothing")
             if (ranges.isEmpty()) {
                 activeHighlights.remove(key)
-                return@invokeAndWait
+                return@invokeLater
             }
             
             // Add new highlights
