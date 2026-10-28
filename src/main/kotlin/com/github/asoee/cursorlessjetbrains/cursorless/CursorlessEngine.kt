@@ -44,6 +44,14 @@ class CursorlessEngine(private val driver: JavetDriver) {
         return listOf(jsonElement as JsonObject)
     }
 
+    fun showScopeVisualizer(scopeTypeJson: String, visualizationType: String) {
+        driver.showScopeVisualizer(scopeTypeJson, visualizationType)
+    }
+
+    fun hideScopeVisualizer() {
+        driver.hideScopeVisualizer()
+    }
+
     fun talonSpokenFormsChanged() {
         driver.talonSpokenFormsChanged()
     }

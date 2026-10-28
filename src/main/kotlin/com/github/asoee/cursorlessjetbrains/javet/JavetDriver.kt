@@ -537,6 +537,32 @@ open class JavetDriver {
 
     }
 
+    fun showScopeVisualizer(scopeTypeJson: String, visualizationType: String) {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   plugin?.scopeVisualizer?.start(${scopeTypeJson}, ${Json.encodeToString(visualizationType)});
+            | })();
+            | """.trimMargin()
+
+        runtime.getExecutor(js)
+            .executeVoid()
+        eventLoop.await()
+    }
+
+    fun hideScopeVisualizer() {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   plugin?.scopeVisualizer?.stop();
+            | })();
+            | """.trimMargin()
+
+        runtime.getExecutor(js)
+            .executeVoid()
+        eventLoop.await()
+    }
+
     fun talonSpokenFormsChanged() {
         val js = """
             | (async () => {
