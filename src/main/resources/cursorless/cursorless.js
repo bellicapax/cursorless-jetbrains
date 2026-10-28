@@ -7429,6 +7429,15 @@ function toLineRange({ start: start2, end }) {
 function toCharacterRange({ start: start2, end }) {
   return { type: "character", start: start2, end };
 }
+function isGeneralizedRangeEqual(a, b) {
+  if (a.type === "character" && b.type === "character") {
+    return a.start.isEqual(b.start) && a.end.isEqual(b.end);
+  }
+  if (a.type === "line" && b.type === "line") {
+    return a.start === b.start && a.end === b.end;
+  }
+  return false;
+}
 
 // ../common/src/util/toPlainObject.ts
 function rangeToPlainObject(range3) {
@@ -47459,6 +47468,81 @@ var JetbrainsSnippets = class {
   }
 };
 
+// src/ide/JetbrainsScopeVisualizer.ts
+var JetbrainsScopeVisualizer = class {
+  constructor(client, scopeProvider) {
+    this.client = client;
+    this.scopeProvider = scopeProvider;
+    this.highlightIds = [];
+    this.renderedEditorIds = /* @__PURE__ */ new Set();
+  }
+  start(scopeType, visualizationType) {
+    this.stop();
+    const nestedId = `scopeVisualizer.${visualizationType}`;
+    this.highlightIds = [
+      "scopeVisualizer.domain",
+      nestedId,
+      `${nestedId}.equalsDomain`
+    ];
+    this.listener = visualizationType === "iteration" ? this.scopeProvider.onDidChangeIterationScopeRanges(
+      (editor, iterationScopeRanges) => this.render(
+        editor,
+        iterationScopeRanges.map(({ domain: domain2, ranges }) => ({
+          domain: toCharacterRange(domain2),
+          nestedRanges: ranges.map(
+            ({ range: range3 }) => toCharacterRange(range3)
+          )
+        }))
+      ),
+      { scopeType, visibleOnly: true, includeNestedTargets: false }
+    ) : this.scopeProvider.onDidChangeScopeRanges(
+      (editor, scopeRanges) => this.render(
+        editor,
+        scopeRanges.map(({ domain: domain2, targets }) => ({
+          domain: toCharacterRange(domain2),
+          nestedRanges: targets.map(
+            (target) => visualizationType === "removal" ? target.removalHighlightRange : toCharacterRange(target.contentRange)
+          )
+        }))
+      ),
+      { scopeType, visibleOnly: true }
+    );
+  }
+  stop() {
+    this.listener?.dispose();
+    this.listener = void 0;
+    for (const editorId of this.renderedEditorIds) {
+      for (const highlightId of this.highlightIds) {
+        this.client.setHighlightRanges(highlightId, editorId, "[]");
+      }
+    }
+    this.renderedEditorIds.clear();
+  }
+  /** Like VS Code's renderer, a domain identical to its only nested range is drawn once, in the nested colors */
+  render(editor, scopes) {
+    const domainRanges = [];
+    const nestedRanges = [];
+    const domainEqualsNestedRanges = [];
+    for (const { domain: domain2, nestedRanges: nested } of scopes) {
+      if (nested.length === 1 && isGeneralizedRangeEqual(nested[0], domain2)) {
+        domainEqualsNestedRanges.push(domain2);
+      } else {
+        domainRanges.push(domain2);
+        nestedRanges.push(...nested);
+      }
+    }
+    const [domainId, nestedId, equalsDomainId] = this.highlightIds;
+    this.renderedEditorIds.add(editor.id);
+    this.client.setHighlightRanges(domainId, editor.id, JSON.stringify(domainRanges));
+    this.client.setHighlightRanges(nestedId, editor.id, JSON.stringify(nestedRanges));
+    this.client.setHighlightRanges(
+      equalsDomainId,
+      editor.id,
+      JSON.stringify(domainEqualsNestedRanges)
+    );
+  }
+};
+
 // src/extension.ts
 async function activate(plugin, wasmDirectory) {
   console.log("activate started");
@@ -47480,6 +47564,10 @@ async function activate(plugin, wasmDirectory) {
     talonSpokenForms: plugin.talonSpokenForms,
     snippets: new JetbrainsSnippets(plugin.client, plugin.ide)
   });
+  plugin.scopeVisualizer = new JetbrainsScopeVisualizer(
+    plugin.client,
+    engine.scopeProvider
+  );
   console.log("activate completed");
   return engine;
 }

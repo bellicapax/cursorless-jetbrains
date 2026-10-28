@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -652,6 +653,29 @@ class TestCursorlessActions : BasePlatformTestCase() {
             assertEquals(snippetPath.toFile().canonicalPath, FileDocumentManager.getInstance().getFile(editor.document)?.path?.let { java.io.File(it).canonicalPath })
             assertTrue(editor.document.text, editor.document.text.contains("println"))
         }
+    }
+
+    @Test
+    fun testScopeVisualizerHighlightsAndClears() {
+        val fixture = mainJavaFixture()
+        awaitHats(fixture, fixture.editor)
+        val engine = fixture.projectService.cursorlessEngine
+        fun scopeHighlighters() = fixture.editor.markupModel.allHighlighters
+            .filter { it.getTextAttributes(null)?.effectType == EffectType.BOXED }
+
+        engine.showScopeVisualizer("""{"type": "namedFunction"}""", "content")
+
+        // main and doSomethingElse: each function is highlighted with its domain and content
+        await.atMost(2, TimeUnit.SECONDS).until { scopeHighlighters().isNotEmpty() }
+        runInEdtAndWait {
+            val highlighted = scopeHighlighters().map { fixture.editor.document.getText(it.textRange) }
+            assertTrue(highlighted.toString(), highlighted.any { it.contains("public static void main") })
+            assertTrue(highlighted.toString(), highlighted.any { it.contains("doSomethingElse(int i)") })
+        }
+
+        engine.hideScopeVisualizer()
+
+        await.atMost(2, TimeUnit.SECONDS).until { scopeHighlighters().isEmpty() }
     }
 
     private fun targetJson(target: CursorlessTarget): String {
