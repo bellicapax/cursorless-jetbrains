@@ -33,6 +33,7 @@ class CommandRegistryService {
         registerCommand("cursorless.showScopeVisualizer", ScopeVisualizerCommand::show)
         registerCommand("cursorless.hideScopeVisualizer", ScopeVisualizerCommand::hide)
         registerCommand("cursorless.showCheatsheet", ShowCheatsheetCommand::fromArgs)
+        registerCommand("cursorless.analyzeCommandHistory", AnalyzeCommandHistoryCommand::fromArgs)
     }
 
 }

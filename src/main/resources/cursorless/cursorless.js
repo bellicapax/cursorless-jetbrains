@@ -216,14 +216,14 @@ var require_nearley = __commonJS({
           var lastLineDigits = String(this.line).length;
           message += " at line " + this.line + " col " + col + ":\n\n";
           message += lines.map(function(line, i3) {
-            return pad(this.line - lines.length + i3 + 1, lastLineDigits) + " " + line;
+            return pad3(this.line - lines.length + i3 + 1, lastLineDigits) + " " + line;
           }, this).join("\n");
-          message += "\n" + pad("", lastLineDigits + col) + "^\n";
+          message += "\n" + pad3("", lastLineDigits + col) + "^\n";
           return message;
         } else {
           return message + " at index " + (this.index - 1);
         }
-        function pad(n2, length) {
+        function pad3(n2, length) {
           var s2 = String(n2);
           return Array(length - s2.length + 1).join(" ") + s2;
         }
@@ -478,7 +478,7 @@ var require_moo = __commonJS({
       }
     })(exports2, function() {
       "use strict";
-      var hasOwnProperty10 = Object.prototype.hasOwnProperty;
+      var hasOwnProperty11 = Object.prototype.hasOwnProperty;
       var toString3 = Object.prototype.toString;
       var hasSticky = typeof new RegExp().sticky === "boolean";
       function isRegExp(o2) {
@@ -520,7 +520,7 @@ var require_moo = __commonJS({
           throw new Error("Not a pattern: " + obj);
         }
       }
-      function pad(s2, length) {
+      function pad3(s2, length) {
         if (s2.length > length) {
           return s2;
         }
@@ -612,7 +612,7 @@ var require_moo = __commonJS({
           shouldThrow: false
         };
         for (var key in obj) {
-          if (hasOwnProperty10.call(obj, key)) {
+          if (hasOwnProperty11.call(obj, key)) {
             options2[key] = obj[key];
           }
         }
@@ -713,9 +713,9 @@ var require_moo = __commonJS({
         var result = compileRules(toRules(rules));
         return new Lexer({ start: result }, "start");
       }
-      function checkStateGroup(g2, name2, map3) {
+      function checkStateGroup(g2, name2, map4) {
         var state = g2 && (g2.push || g2.next);
-        if (state && !map3[state]) {
+        if (state && !map4[state]) {
           throw new Error("Missing state '" + state + "' (in token '" + g2.defaultType + "' of state '" + name2 + "')");
         }
         if (g2 && g2.pop && +g2.pop !== 1) {
@@ -756,32 +756,32 @@ var require_moo = __commonJS({
             j2--;
           }
         }
-        var map3 = /* @__PURE__ */ Object.create(null);
+        var map4 = /* @__PURE__ */ Object.create(null);
         for (var i3 = 0; i3 < keys2.length; i3++) {
           var key = keys2[i3];
-          map3[key] = compileRules(ruleMap[key], true);
+          map4[key] = compileRules(ruleMap[key], true);
         }
         for (var i3 = 0; i3 < keys2.length; i3++) {
           var name2 = keys2[i3];
-          var state = map3[name2];
+          var state = map4[name2];
           var groups = state.groups;
           for (var j2 = 0; j2 < groups.length; j2++) {
-            checkStateGroup(groups[j2], name2, map3);
+            checkStateGroup(groups[j2], name2, map4);
           }
           var fastKeys = Object.getOwnPropertyNames(state.fast);
           for (var j2 = 0; j2 < fastKeys.length; j2++) {
-            checkStateGroup(state.fast[fastKeys[j2]], name2, map3);
+            checkStateGroup(state.fast[fastKeys[j2]], name2, map4);
           }
         }
-        return new Lexer(map3, start2);
+        return new Lexer(map4, start2);
       }
-      function keywordTransform(map3) {
+      function keywordTransform(map4) {
         var isMap2 = typeof Map !== "undefined";
         var reverseMap = isMap2 ? /* @__PURE__ */ new Map() : /* @__PURE__ */ Object.create(null);
-        var types = Object.getOwnPropertyNames(map3);
+        var types = Object.getOwnPropertyNames(map4);
         for (var i3 = 0; i3 < types.length; i3++) {
           var tokenType = types[i3];
-          var item2 = map3[tokenType];
+          var item2 = map4[tokenType];
           var keywordList = Array.isArray(item2) ? item2 : [item2];
           keywordList.forEach(function(keyword) {
             if (typeof keyword !== "string") {
@@ -978,9 +978,9 @@ var require_moo = __commonJS({
         for (var i3 = 0; i3 < displayedLines.length; i3++) {
           var line = displayedLines[i3];
           var lineNo = firstDisplayedLine + i3;
-          errorLines.push(pad(String(lineNo), lastLineDigits) + "  " + line);
+          errorLines.push(pad3(String(lineNo), lastLineDigits) + "  " + line);
           if (lineNo === token.line) {
-            errorLines.push(pad("", lastLineDigits + token.col + 1) + "^");
+            errorLines.push(pad3("", lastLineDigits + token.col + 1) + "^");
           }
         }
         return errorLines.join("\n");
@@ -1020,7 +1020,7 @@ var require_immutability_helper = __commonJS({
       }
     }
     exports2.invariant = invariant4;
-    var hasOwnProperty10 = Object.prototype.hasOwnProperty;
+    var hasOwnProperty11 = Object.prototype.hasOwnProperty;
     var splice3 = Array.prototype.splice;
     var toString3 = Object.prototype.toString;
     function type(obj) {
@@ -1029,7 +1029,7 @@ var require_immutability_helper = __commonJS({
     var assign = Object.assign || /* istanbul ignore next */
     (function(target, source) {
       getAllKeys2(source).forEach(function(key) {
-        if (hasOwnProperty10.call(source, key)) {
+        if (hasOwnProperty11.call(source, key)) {
           target[key] = source[key];
         }
       });
@@ -1083,7 +1083,7 @@ var require_immutability_helper = __commonJS({
           });
           var nextObject = object2;
           getAllKeys2(spec).forEach(function(key) {
-            if (hasOwnProperty10.call(_this.commands, key)) {
+            if (hasOwnProperty11.call(_this.commands, key)) {
               var objectWasNextObject = object2 === nextObject;
               nextObject = _this.commands[key](spec[key], nextObject, spec, object2);
               if (objectWasNextObject && _this.isEquals(nextObject, object2)) {
@@ -1092,7 +1092,7 @@ var require_immutability_helper = __commonJS({
             } else {
               var nextValueForKey = type(object2) === "Map" ? _this.update(object2.get(key), spec[key]) : _this.update(object2[key], spec[key]);
               var nextObjectValue = type(nextObject) === "Map" ? nextObject.get(key) : nextObject[key];
-              if (!_this.isEquals(nextValueForKey, nextObjectValue) || typeof nextValueForKey === "undefined" && !hasOwnProperty10.call(object2, key)) {
+              if (!_this.isEquals(nextValueForKey, nextObjectValue) || typeof nextValueForKey === "undefined" && !hasOwnProperty11.call(object2, key)) {
                 if (nextObject === object2) {
                   nextObject = copy(object2);
                 }
@@ -6809,6 +6809,21 @@ function isIndex(value, length) {
 }
 var isIndex_default = isIndex;
 
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_baseAssignValue.js
+function baseAssignValue(object2, key, value) {
+  if (key == "__proto__" && defineProperty_default) {
+    defineProperty_default(object2, key, {
+      "configurable": true,
+      "enumerable": true,
+      "value": value,
+      "writable": true
+    });
+  } else {
+    object2[key] = value;
+  }
+}
+var baseAssignValue_default = baseAssignValue;
+
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/eq.js
 function eq(value, other) {
   return value === other || value !== value && other !== other;
@@ -7220,8 +7235,8 @@ function isKeyable(value) {
 var isKeyable_default = isKeyable;
 
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_getMapData.js
-function getMapData(map3, key) {
-  var data = map3.__data__;
+function getMapData(map4, key) {
+  var data = map4.__data__;
   return isKeyable_default(key) ? data[typeof key == "string" ? "string" : "hash"] : data.map;
 }
 var getMapData_default = getMapData;
@@ -7893,9 +7908,9 @@ function equalArrays(array2, other, bitmask, customizer, equalFunc, stack) {
 var equalArrays_default = equalArrays;
 
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_mapToArray.js
-function mapToArray(map3) {
-  var index = -1, result = Array(map3.size);
-  map3.forEach(function(value, key) {
+function mapToArray(map4) {
+  var index = -1, result = Array(map4.size);
+  map4.forEach(function(value, key) {
     result[++index] = [key, value];
   });
   return result;
@@ -8234,6 +8249,17 @@ function baseIteratee(value) {
 }
 var baseIteratee_default = baseIteratee;
 
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_arrayAggregator.js
+function arrayAggregator(array2, setter, iteratee, accumulator) {
+  var index = -1, length = array2 == null ? 0 : array2.length;
+  while (++index < length) {
+    var value = array2[index];
+    setter(accumulator, value, iteratee(value), array2);
+  }
+  return accumulator;
+}
+var arrayAggregator_default = arrayAggregator;
+
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_createBaseFor.js
 function createBaseFor(fromRight) {
   return function(object2, iteratee, keysFunc) {
@@ -8282,6 +8308,24 @@ var createBaseEach_default = createBaseEach;
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_baseEach.js
 var baseEach = createBaseEach_default(baseForOwn_default);
 var baseEach_default = baseEach;
+
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_baseAggregator.js
+function baseAggregator(collection, setter, iteratee, accumulator) {
+  baseEach_default(collection, function(value, key, collection2) {
+    setter(accumulator, value, iteratee(value), collection2);
+  });
+  return accumulator;
+}
+var baseAggregator_default = baseAggregator;
+
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_createAggregator.js
+function createAggregator(setter, initializer3) {
+  return function(collection, iteratee) {
+    var func2 = isArray_default(collection) ? arrayAggregator_default : baseAggregator_default, accumulator = initializer3 ? initializer3() : {};
+    return func2(collection, setter, baseIteratee_default(iteratee, 2), accumulator);
+  };
+}
+var createAggregator_default = createAggregator;
 
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/isArrayLikeObject.js
 function isArrayLikeObject(value) {
@@ -8343,6 +8387,25 @@ function baseMap(collection, iteratee) {
   return result;
 }
 var baseMap_default = baseMap;
+
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/map.js
+function map(collection, iteratee) {
+  var func2 = isArray_default(collection) ? arrayMap_default : baseMap_default;
+  return func2(collection, baseIteratee_default(iteratee, 3));
+}
+var map_default = map;
+
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/groupBy.js
+var objectProto13 = Object.prototype;
+var hasOwnProperty10 = objectProto13.hasOwnProperty;
+var groupBy = createAggregator_default(function(result, value, key) {
+  if (hasOwnProperty10.call(result, key)) {
+    result[key].push(value);
+  } else {
+    baseAssignValue_default(result, key, [value]);
+  }
+});
+var groupBy_default = groupBy;
 
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/_baseValues.js
 function baseValues(object2, props) {
@@ -8643,6 +8706,12 @@ var sortBy = baseRest_default(function(collection, iteratees) {
   return baseOrderBy_default(collection, baseFlatten_default(iteratees, 1), []);
 });
 var sortBy_default = sortBy;
+
+// ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/sum.js
+function sum(array2) {
+  return array2 && array2.length ? baseSum_default(array2, identity_default) : 0;
+}
+var sum_default = sum;
 
 // ../../node_modules/.pnpm/lodash-es@4.18.1/node_modules/lodash-es/sumBy.js
 function sumBy(array2, iteratee) {
@@ -12865,7 +12934,7 @@ function find(iterable, predicate) {
 function iter(iterable) {
   return iterable[Symbol.iterator]();
 }
-function map(iterable, mapper) {
+function map2(iterable, mapper) {
   return Array.from(imap(iterable, mapper));
 }
 function range_(start2, stop2, step) {
@@ -13451,9 +13520,9 @@ var mapTag4 = defineMappingTag("tag:yaml.org,2002:map", {
   create: () => ({}),
   identify: isPlainObject,
   represent: (o2) => {
-    const map3 = /* @__PURE__ */ new Map();
-    for (const key of Object.keys(o2)) map3.set(key, o2[key]);
-    return map3;
+    const map4 = /* @__PURE__ */ new Map();
+    for (const key of Object.keys(o2)) map4.set(key, o2[key]);
+    return map4;
   },
   addPair: (container, key, value) => {
     if (key !== null && typeof key === "object") return "object-based map does not support complex keys";
@@ -13482,9 +13551,9 @@ var setTag4 = defineMappingTag("tag:yaml.org,2002:set", {
   create: () => /* @__PURE__ */ new Set(),
   identify: (data) => data instanceof Set,
   represent: (data) => {
-    const map3 = /* @__PURE__ */ new Map();
-    for (const key of data) map3.set(key, null);
-    return map3;
+    const map4 = /* @__PURE__ */ new Map();
+    for (const key of data) map4.set(key, null);
+    return map4;
   },
   addPair: (container, key, value) => {
     if (value !== null) return "cannot resolve a set item";
@@ -13708,10 +13777,10 @@ var realMapTag = defineMappingTag("tag:yaml.org,2002:map", {
   identify: (data) => data instanceof Map || isPlainObject(data),
   represent: (data) => {
     if (data instanceof Map) return data;
-    const map3 = /* @__PURE__ */ new Map();
+    const map4 = /* @__PURE__ */ new Map();
     const obj = data;
-    for (const key of Object.keys(obj)) map3.set(key, obj[key]);
-    return map3;
+    for (const key of Object.keys(obj)) map4.set(key, obj[key]);
+    return map4;
   }
 });
 function normalizeKey(key) {
@@ -13730,9 +13799,9 @@ var legacyMapTag = defineMappingTag("tag:yaml.org,2002:map", {
   create: () => ({}),
   identify: isPlainObject,
   represent: (o2) => {
-    const map3 = /* @__PURE__ */ new Map();
-    for (const key of Object.keys(o2)) map3.set(key, o2[key]);
-    return map3;
+    const map4 = /* @__PURE__ */ new Map();
+    for (const key of Object.keys(o2)) map4.set(key, o2[key]);
+    return map4;
   },
   addPair: (container, key, value) => {
     const normalizedKey = normalizeKey(key);
@@ -15103,20 +15172,20 @@ function getErrorMessage(error62) {
 }
 
 // ../lib-common/src/util/itertools.ts
-function groupBy(list, func2) {
-  const map3 = /* @__PURE__ */ new Map();
+function groupBy2(list, func2) {
+  const map4 = /* @__PURE__ */ new Map();
   for (const element of list) {
     const key = func2(element);
     let group;
-    if (map3.has(key)) {
-      group = map3.get(key);
+    if (map4.has(key)) {
+      group = map4.get(key);
     } else {
       group = [];
-      map3.set(key, group);
+      map4.set(key, group);
     }
     group.push(element);
   }
-  return map3;
+  return map4;
 }
 function isEmptyIterable(iterable) {
   for (const _3 of iterable) {
@@ -15182,805 +15251,6 @@ function zipStrict(list1, list2) {
     throw new Error("Lists must have the same length");
   }
   return list1.map((value, index) => [value, list2[index]]);
-}
-
-// src/ide/JetbrainsHats.ts
-var JetbrainsHats = class {
-  constructor(client) {
-    __publicField(this, "isEnabledNotifier", new Notifier());
-    __publicField(this, "hatStyleChangedNotifier", new Notifier());
-    __publicField(this, "hatRanges", []);
-    __publicField(this, "client");
-    __publicField(this, "enabledHatStyles");
-    __publicField(this, "enabledHatShapes", ["default"]);
-    __publicField(this, "hatShapePenalties", /* @__PURE__ */ new Map([["default", 0]]));
-    __publicField(this, "enabledHatColors", ["default"]);
-    __publicField(this, "hatColorPenalties", /* @__PURE__ */ new Map([["default", 0]]));
-    __publicField(this, "isEnabled", true);
-    this.client = client;
-    this.enabledHatStyles = this.generateHatStyles();
-  }
-  setHatRanges(hatRanges) {
-    this.hatRanges = hatRanges;
-    const jbHatRanges = this.toJetbransHatRanges(hatRanges);
-    const hatsJson = JSON.stringify(jbHatRanges);
-    this.client.hatsUpdated(hatsJson);
-    return Promise.resolve();
-  }
-  setEnabledHatShapes(enabledHatShapes) {
-    this.enabledHatShapes = enabledHatShapes;
-    this.enabledHatStyles = this.generateHatStyles();
-    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
-  }
-  setHatShapePenalties(hatShapePenalties) {
-    this.hatShapePenalties = new Map(
-      Object.entries(hatShapePenalties)
-    );
-    this.enabledHatStyles = this.generateHatStyles();
-    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
-  }
-  setEnabledHatColors(enabledHatColors) {
-    this.enabledHatColors = enabledHatColors;
-    this.enabledHatStyles = this.generateHatStyles();
-    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
-  }
-  setHatColorPenalties(hatColorPenalties) {
-    this.hatColorPenalties = new Map(
-      Object.entries(hatColorPenalties)
-    );
-    this.enabledHatStyles = this.generateHatStyles();
-    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
-  }
-  toJetbransHatRanges(hatRanges) {
-    return hatRanges.map((range3) => {
-      return {
-        styleName: range3.styleName,
-        editorId: range3.editor.id,
-        range: range3.range
-      };
-    });
-  }
-  generateHatStyles() {
-    const res = /* @__PURE__ */ new Map();
-    for (const color of this.enabledHatColors) {
-      const colorPenalty = this.getColorPenalty(color);
-      for (const shape of this.enabledHatShapes) {
-        const shapePenalty = this.getShapePenalty(shape);
-        let styleName;
-        if (shape === "default") {
-          styleName = color;
-        } else {
-          styleName = `${color}-${shape}`;
-        }
-        res.set(styleName, { penalty: colorPenalty + shapePenalty });
-      }
-    }
-    return Object.fromEntries(res);
-  }
-  getShapePenalty(shape) {
-    let shapePenalty = this.hatShapePenalties.get(shape);
-    if (shapePenalty == null) {
-      shapePenalty = shape === "default" ? 0 : 2;
-    } else {
-      shapePenalty = shape === "default" ? shapePenalty : shapePenalty + 1;
-    }
-    return shapePenalty;
-  }
-  getColorPenalty(color) {
-    let colorPenalty = this.hatColorPenalties.get(color);
-    if (colorPenalty == null) {
-      colorPenalty = color === "default" ? 0 : 1;
-    }
-    return colorPenalty;
-  }
-  onDidChangeEnabledHatStyles(listener) {
-    return this.hatStyleChangedNotifier.registerListener(listener);
-  }
-  onDidChangeIsEnabled(listener) {
-    return this.isEnabledNotifier.registerListener(listener);
-  }
-  toggle(isEnabled) {
-    this.isEnabled = isEnabled ?? !this.isEnabled;
-    this.isEnabledNotifier.notifyListeners(this.isEnabled);
-  }
-};
-
-// src/ide/JetbrainsTalonSpokenForms.ts
-var LATEST_SPOKEN_FORMS_JSON_VERSION = 1;
-var JetbrainsTalonSpokenForms = class {
-  constructor(client) {
-    __publicField(this, "client", client);
-    __publicField(this, "notifier", new Notifier());
-    __publicField(this, "onDidChange", this.notifier.registerListener);
-  }
-  notifyChanged() {
-    this.notifier.notifyListeners();
-  }
-  async getSpokenForms() {
-    const stateJson = this.client.readTalonSpokenForms();
-    if (stateJson == null) {
-      throw new NeedsInitialTalonUpdateError(
-        "Custom spoken forms file (~/.cursorless/state.json) not found. Using default spoken forms."
-      );
-    }
-    const payload = JSON.parse(stateJson);
-    if (payload.version > LATEST_SPOKEN_FORMS_JSON_VERSION) {
-      throw new Error(
-        `Unsupported spoken forms version ${payload.version}. Supported versions: 0-${LATEST_SPOKEN_FORMS_JSON_VERSION}`
-      );
-    }
-    return payload;
-  }
-};
-
-// src/ide/JetbrainsPlugin.ts
-var JetbrainsPlugin = class {
-  constructor(client, ide, hats, talonSpokenForms) {
-    __publicField(this, "client", client);
-    __publicField(this, "ide", ide);
-    __publicField(this, "hats", hats);
-    __publicField(this, "talonSpokenForms", talonSpokenForms);
-    /** Set by activate, once the engine's scope provider exists */
-    __publicField(this, "scopeVisualizer");
-  }
-  /**
-   * The cheat sheet for Talon's "cursorless cheat sheet", built from the user's spoken forms as the VS Code
-   * extension does; the IDE writes it into the cheatsheet page.
-   */
-  async getCheatsheetInfo() {
-    try {
-      const { spokenForms } = await this.talonSpokenForms.getSpokenForms();
-      return getCheatsheetInfo(spokenForms);
-    } catch (error62) {
-      console.error("Using default spoken forms for the cheat sheet: " + error62);
-      return getDefaultCheatsheetInfo();
-    }
-  }
-};
-function createPlugin(client, ide) {
-  const hats = new JetbrainsHats(client);
-  const talonSpokenForms = new JetbrainsTalonSpokenForms(client);
-  return new JetbrainsPlugin(client, ide, hats, talonSpokenForms);
-}
-
-// src/ide/JetbrainsConfiguration.ts
-var JetbrainsConfiguration = class {
-  constructor(configuration) {
-    __publicField(this, "notifier", new Notifier());
-    __publicField(this, "configuration", CONFIGURATION_DEFAULTS);
-    __publicField(this, "onDidChangeConfiguration", this.notifier.registerListener);
-    this.configuration = configuration;
-  }
-  getOwnConfiguration(path, _scope) {
-    return get_default(this.configuration, path);
-  }
-  updateConfiguration(configuration) {
-    this.configuration = configuration;
-    this.notifier.notifyListeners();
-  }
-};
-function createJetbrainsConfiguration(configuration) {
-  return new JetbrainsConfiguration(configuration);
-}
-
-// src/ide/JetbrainsCapabilities.ts
-var COMMAND_CAPABILITIES = {
-  clipboardCopy: { acceptsLocation: true },
-  clipboardPaste: true,
-  toggleLineComment: { acceptsLocation: true },
-  indentLine: { acceptsLocation: true },
-  outdentLine: { acceptsLocation: true },
-  rename: { acceptsLocation: true },
-  quickFix: { acceptsLocation: true },
-  revealDefinition: { acceptsLocation: true },
-  revealTypeDefinition: { acceptsLocation: true },
-  showHover: { acceptsLocation: true },
-  showDebugHover: { acceptsLocation: true },
-  extractVariable: { acceptsLocation: true },
-  fold: { acceptsLocation: true },
-  highlight: { acceptsLocation: true },
-  unfold: { acceptsLocation: true },
-  showReferences: { acceptsLocation: true },
-  insertLineAfter: { acceptsLocation: true },
-  gitAccept: { acceptsLocation: false },
-  gitRevert: { acceptsLocation: false },
-  gitStage: { acceptsLocation: false },
-  gitUnstage: { acceptsLocation: false }
-};
-var JetbrainsCapabilities = class {
-  constructor() {
-    __publicField(this, "commands", COMMAND_CAPABILITIES);
-  }
-};
-
-// src/ide/JetbrainsEvents.ts
-function fromJetbrainsContentChange(document, firstLine, lastLine, linedata) {
-  const result = [];
-  const text = linedata.join("\n");
-  const range3 = new Range(
-    new Position(firstLine, 0),
-    new Position(lastLine - 1, document.lineAt(lastLine - 1).text.length)
-  );
-  const rangeOffset = document.offsetAt(range3.start);
-  const rangeLength = document.offsetAt(range3.end) - rangeOffset;
-  result.push({
-    range: range3,
-    rangeOffset,
-    rangeLength,
-    text
-  });
-  return result;
-}
-
-// src/ide/JetbrainsClipboard.ts
-var JetbrainsClipboard = class {
-  constructor(client) {
-    __publicField(this, "client", client);
-  }
-  async readText() {
-    return "";
-  }
-  async writeText(_value) {
-    return;
-  }
-  async copy(editorId, ranges) {
-    const rangesJson = JSON.stringify(ranges);
-    this.client.clipboardCopy(editorId, rangesJson);
-  }
-  async paste(editorId) {
-    this.client.clipboardPaste(editorId);
-  }
-};
-
-// src/ide/JetbrainsMessages.ts
-var JetbrainsMessages = class {
-  async showMessage(_type, _id, _message, ..._options) {
-    return void 0;
-  }
-};
-
-// src/ide/JetbrainsKeyValueStore.ts
-var JetbrainsKeyValueStore = class {
-  constructor(client) {
-    __publicField(this, "client", client);
-  }
-  get(key) {
-    const valueJson = this.client.keyValueGet(key);
-    return valueJson == null ? KEY_VALUE_STORE_DEFAULTS[key] : JSON.parse(valueJson);
-  }
-  set(key, value) {
-    this.client.keyValueSet(key, JSON.stringify(value));
-    return Promise.resolve();
-  }
-};
-
-// src/ide/setSelections.ts
-function setSelections(client, document, editorId, selections) {
-  const selectionsJson = JSON.stringify(selections);
-  client.setSelection(editorId, selectionsJson);
-  return Promise.resolve();
-}
-
-// src/ide/jetbrainsPerformEdits.ts
-function jetbrainsPerformEdits(client, ide, document, id2, edits) {
-  const changes = document.edit(edits);
-  const editorEdit = {
-    text: document.text,
-    changes: changes.map((change) => ({
-      rangeOffset: change.rangeOffset,
-      rangeLength: change.rangeLength,
-      text: change.text
-    }))
-  };
-  client.documentUpdated(id2, JSON.stringify(editorEdit));
-  ide.emitDidChangeTextDocument({
-    document,
-    contentChanges: changes
-  });
-}
-
-// src/ide/JetbrainsEditorCommand.ts
-var JetbrainsEditorCommand = class {
-  constructor(ranges, singleRange, restoreSelection, ideCommand) {
-    __publicField(this, "ranges", ranges);
-    __publicField(this, "singleRange", singleRange);
-    __publicField(this, "restoreSelection", restoreSelection);
-    __publicField(this, "ideCommand", ideCommand);
-  }
-};
-
-// src/ide/JetbrainsEditor.ts
-var JetbrainsEditor = class {
-  constructor(client, ide, id2, document, visibleRanges, selections) {
-    __publicField(this, "client", client);
-    __publicField(this, "ide", ide);
-    __publicField(this, "id", id2);
-    __publicField(this, "document", document);
-    __publicField(this, "visibleRanges", visibleRanges);
-    __publicField(this, "selections", selections);
-    __publicField(this, "options", {
-      tabSize: 4,
-      insertSpaces: true
-    });
-    __publicField(this, "isActive", true);
-    __publicField(this, "isVisible", true);
-    __publicField(this, "isEditable", true);
-    __publicField(this, "isWritable", true);
-  }
-  isEqual(other) {
-    return this.id === other.id;
-  }
-  async setSelections(selections, _opts) {
-    if (!selectionsEqual(this.selections, selections)) {
-      await setSelections(this.client, this.document, this.id, selections);
-      this.selections = selections;
-    }
-  }
-  edit(edits) {
-    if (!this.isWritable) {
-      return Promise.resolve(false);
-    }
-    jetbrainsPerformEdits(this.client, this.ide, this.document, this.id, edits);
-    return Promise.resolve(true);
-  }
-  async clipboardCopy(ranges) {
-    await this.ide.clipboard.copy(this.id, ranges);
-  }
-  async clipboardPaste() {
-    const changesJson = this.client.clipboardPaste(this.id);
-    if (!changesJson) {
-      return;
-    }
-    const pasteChanges = JSON.parse(changesJson);
-    for (const { rangeOffset, rangeLength, text } of pasteChanges) {
-      const range3 = new Range(
-        this.document.positionAt(rangeOffset),
-        this.document.positionAt(rangeOffset + rangeLength)
-      );
-      const contentChanges = this.document.edit([{ range: range3, text }]);
-      this.ide.emitDidChangeTextDocument({
-        document: this.document,
-        contentChanges
-      });
-    }
-  }
-  async indentLine(ranges) {
-    const command = new JetbrainsEditorCommand(
-      ranges ? ranges : [],
-      true,
-      true,
-      "EditorIndentSelection"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async outdentLine(ranges) {
-    const command = new JetbrainsEditorCommand(
-      ranges ? ranges : [],
-      true,
-      true,
-      "EditorUnindentSelection"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async insertLineAfter(ranges) {
-    await this.client.insertLineAfter(this.id, JSON.stringify(ranges));
-  }
-  async focus() {
-    await this.client.focusEditor(this.id);
-  }
-  revealRange(_range) {
-    return Promise.resolve();
-  }
-  async revealLine(lineNumber, at) {
-    await this.client.revealLine(this.id, lineNumber, at);
-  }
-  async openLink(range3, _options) {
-    const command = new JetbrainsEditorCommand(
-      [range3],
-      true,
-      false,
-      "GotoDeclaration"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async fold(ranges) {
-    const command = new JetbrainsEditorCommand(
-      ranges ? ranges : [],
-      true,
-      false,
-      "CollapseRegion"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async unfold(ranges) {
-    const command = new JetbrainsEditorCommand(
-      ranges ? ranges : [],
-      true,
-      false,
-      "ExpandRegion"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async toggleBreakpoint(ranges) {
-    for (const range3 of ranges ?? []) {
-      const position = range3.type === "line" ? new Position(range3.start, 0) : range3.start;
-      const command = new JetbrainsEditorCommand(
-        [new Range(position, position)],
-        true,
-        false,
-        "ToggleLineBreakpoint"
-      );
-      await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-    }
-  }
-  async toggleLineComment(ranges) {
-    const command = new JetbrainsEditorCommand(
-      ranges ? ranges : [],
-      true,
-      false,
-      "CommentByLineComment"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async insertSnippet(snippet, ranges) {
-    console.log("insertSnippet" + snippet);
-    if (ranges != null) {
-      await this.setSelections(ranges.map((range3) => Selection.fromRange(range3)));
-    }
-    await this.client.insertSnippet(this.id, snippet);
-  }
-  async rename(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "RenameElement"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async showReferences(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "FindUsages"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async quickFix(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "ShowIntentionActions"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async revealDefinition(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "GotoDeclaration"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async revealTypeDefinition(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "QuickImplementations"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async showHover(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "QuickJavaDoc"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async showDebugHover(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "QuickEvaluateExpression"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  async extractVariable(range3) {
-    const command = new JetbrainsEditorCommand(
-      range3 ? [range3] : [],
-      true,
-      false,
-      "IntroduceVariable"
-    );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
-  }
-  editNewNotebookCellAbove() {
-    throw new Error("editNewNotebookCellAbove not implemented.");
-  }
-  editNewNotebookCellBelow() {
-    throw new Error("editNewNotebookCellBelow not implemented.");
-  }
-  async gitAccept(_range) {
-    throw new Error("gitAccept not implemented.");
-  }
-  async gitRevert(_range) {
-    throw new Error("gitRevert not implemented.");
-  }
-  async gitStageFile() {
-    throw new Error("gitStageFile not implemented.");
-  }
-  async gitUnstageFile() {
-    throw new Error("gitUnstageFile not implemented.");
-  }
-  async gitStageRange(_range) {
-    throw new Error("gitStageRange not implemented.");
-  }
-  async gitUnstageRange(_range) {
-    throw new Error("gitUnstageRange not implemented.");
-  }
-};
-
-// src/ide/createTextEditor.ts
-function createTextEditor(client, ide, editorState) {
-  const id2 = editorState.id;
-  const uri = u.parse(`talon-jetbrains://${id2}`);
-  const languageId = editorState.languageId ?? "plaintext";
-  const document = new InMemoryTextDocument(uri, languageId, editorState.text);
-  const visibleRanges = [
-    new Range(editorState.firstVisibleLine, 0, editorState.lastVisibleLine, 0)
-  ];
-  const selections = editorState.selections.map(
-    (selection) => createSelection(document, selection)
-  );
-  const editor = new JetbrainsEditor(
-    client,
-    ide,
-    id2,
-    document,
-    visibleRanges,
-    selections
-  );
-  editor.isActive = editorState.active;
-  editor.isVisible = editorState.visible;
-  editor.isEditable = editorState.editable;
-  editor.isWritable = editorState.writable;
-  return editor;
-}
-function createSelection(document, selection) {
-  return new Selection(
-    createPosition(selection.anchor),
-    createPosition(selection.active)
-  );
-}
-function createPosition(jbPosition) {
-  return new Position(jbPosition.line, jbPosition.column);
-}
-
-// src/ide/JetbrainsIDE.ts
-var JetbrainsIDE = class {
-  constructor(client, configuration) {
-    __publicField(this, "client", client);
-    __publicField(this, "configuration");
-    __publicField(this, "keyValueStore");
-    __publicField(this, "messages");
-    __publicField(this, "clipboard");
-    __publicField(this, "capabilities");
-    __publicField(this, "runMode", "production");
-    __publicField(this, "visibleNotebookEditors", []);
-    //   private editorMap;
-    //   private documentMap;
-    __publicField(this, "activeProject");
-    __publicField(this, "activeEditor");
-    __publicField(this, "disposables", []);
-    __publicField(this, "assetsRoot_");
-    __publicField(this, "cursorlessJetbrainsPath");
-    __publicField(this, "quickPickReturnValue");
-    __publicField(this, "editors", /* @__PURE__ */ new Map());
-    __publicField(this, "onDidChangeTextDocumentNotifier", new Notifier());
-    __publicField(this, "onDidOpenTextDocumentNotifier", new Notifier());
-    __publicField(this, "onDidChangeTextDocumentContentNotifier", new Notifier());
-    __publicField(this, "onDidCloseTextDocument", dummyEvent);
-    __publicField(this, "onDidChangeActiveTextEditor", dummyEvent);
-    __publicField(this, "onDidChangeVisibleTextEditors", dummyEvent);
-    __publicField(this, "onDidChangeTextEditorSelection", dummyEvent);
-    __publicField(this, "onDidChangeTextEditorVisibleRanges", dummyEvent);
-    this.configuration = configuration;
-    this.keyValueStore = new JetbrainsKeyValueStore(this.client);
-    this.messages = new JetbrainsMessages();
-    this.clipboard = new JetbrainsClipboard(this.client);
-    this.capabilities = new JetbrainsCapabilities();
-    this.activeProject = void 0;
-    this.activeEditor = void 0;
-  }
-  async init() {
-  }
-  async showQuickPick(_items, _options) {
-    throw Error("showQuickPick Not implemented");
-  }
-  async setHighlightRanges(highlightId, editor, ranges) {
-    const editorId = editor.id;
-    const rangesJson = JSON.stringify(ranges);
-    this.client.setHighlightRanges(highlightId, editorId, rangesJson);
-  }
-  async flashRanges(flashDescriptors) {
-    console.log("flashRangeses");
-    const jbfs = flashDescriptors.map((flashDescriptor) => {
-      const jbf = {
-        editorId: flashDescriptor.editor.id,
-        range: flashDescriptor.range,
-        style: flashDescriptor.style
-      };
-      return jbf;
-    });
-    this.client.flashRanges(JSON.stringify(jbfs));
-  }
-  get assetsRoot() {
-    console.log("get assetsRoot");
-    throw new Error("assetsRoot not implemented.");
-  }
-  get cursorlessVersion() {
-    console.log("get cursorlessVersion");
-    throw new Error("cursorlessVersion not implemented.");
-  }
-  get workspaceFolders() {
-    console.log("get workspaceFolders");
-    throw new Error("workspaceFolders not get implemented.");
-  }
-  get activeTextEditor() {
-    return this.activeEditor;
-  }
-  get activeEditableTextEditor() {
-    return this.activeEditor?.isEditable ? this.activeEditor : void 0;
-  }
-  get visibleTextEditors() {
-    return [...this.editors.values()].filter((editor) => editor.isVisible);
-  }
-  getEditableTextEditor(editor) {
-    if (editor instanceof JetbrainsEditor) {
-      if (editor.isEditable) {
-        return editor;
-      } else {
-        throw Error(`Editor is not editable: ${editor}`);
-      }
-    }
-    throw Error(`Unsupported text editor type: ${editor}`);
-  }
-  async findInDocument(query, editor) {
-    const editorId = (editor ?? this.activeEditor)?.id;
-    if (editorId == null) {
-      throw Error("findInDocument: no editor to search in");
-    }
-    this.client.findInDocument(editorId, query);
-  }
-  async findInWorkspace(query) {
-    const editorId = this.activeEditor?.id;
-    if (editorId == null) {
-      throw Error("findInWorkspace: no active editor");
-    }
-    this.client.findInWorkspace(editorId, query);
-  }
-  async openTextDocument(_path) {
-    throw Error("openTextDocument Not implemented");
-  }
-  async openUntitledTextDocument(_options) {
-    throw Error("openUntitledTextDocument Not implemented");
-  }
-  async showInputBox(options2) {
-    return this.client.showInputBox(JSON.stringify(options2 ?? {})) ?? void 0;
-  }
-  async executeCommand(command, ...args2) {
-    const editorId = this.activeEditor?.id;
-    if (editorId == null) {
-      throw Error(`executeCommand ${command}: no active editor`);
-    }
-    this.client.executeCommand(editorId, command, JSON.stringify(args2));
-    return void 0;
-  }
-  onDidChangeTextDocument(listener) {
-    return this.onDidChangeTextDocumentNotifier.registerListener(listener);
-  }
-  onDidOpenTextDocument(listener, _thisArgs, _disposables) {
-    return this.onDidOpenTextDocumentNotifier.registerListener(listener);
-  }
-  handleCommandError(_err) {
-  }
-  disposeOnExit(...disposables) {
-    this.disposables.push(...disposables);
-    return () => pull_default(this.disposables, ...disposables);
-  }
-  documentClosed(editorId) {
-    this.editors.delete(editorId);
-  }
-  documentCreated(editorStateJson) {
-    this.documentChanged(editorStateJson);
-    const editorState = editorStateJson;
-    const editor = this.editors.get(editorState.id);
-    if (editor) {
-      this.onDidOpenTextDocumentNotifier.notifyListeners(editor.document);
-    }
-  }
-  documentChanged(editorStateJson) {
-    const editorState = editorStateJson;
-    const editor = this.updateTextEditors(editorState);
-    const linedata = getLines(
-      editorState.text,
-      editorState.firstVisibleLine,
-      editorState.lastVisibleLine
-    );
-    const contentChangeEvents = fromJetbrainsContentChange(
-      editor.document,
-      editorState.firstVisibleLine,
-      editorState.lastVisibleLine,
-      linedata
-    );
-    const documentChangeEvent = {
-      document: editor.document,
-      contentChanges: contentChangeEvents
-    };
-    this.emitDidChangeTextDocument(documentChangeEvent);
-  }
-  emitDidChangeTextDocument(event) {
-    this.onDidChangeTextDocumentNotifier.notifyListeners(event);
-  }
-  updateTextEditors(editorState) {
-    let editor = this.editors.get(editorState.id);
-    if (editor) {
-      updateEditor(editor, editorState);
-    } else {
-      editor = createTextEditor(this.client, this, editorState);
-      this.editors.set(editorState.id, editor);
-    }
-    if (editorState.active) {
-      this.activeEditor = editor;
-    }
-    return editor;
-  }
-  readQuery(filename) {
-    return this.client.readQuery(filename);
-  }
-};
-function updateEditor(editor, editorState) {
-  const oldDocument = editor.document;
-  editor.document = new InMemoryTextDocument(
-    oldDocument.uri,
-    oldDocument.languageId,
-    editorState.text
-  );
-  editor.visibleRanges = [
-    new Range(
-      editorState.firstVisibleLine,
-      0,
-      editorState.lastVisibleLine + 1,
-      0
-    )
-  ];
-  editor.selections = editorState.selections.map(
-    (selection) => createSelection(editor.document, selection)
-  );
-  editor.isActive = editorState.active;
-  editor.isVisible = editorState.visible;
-  editor.isEditable = editorState.editable;
-  editor.isWritable = editorState.writable;
-}
-function getLines(text, firstLine, lastLine) {
-  const lines = text.split("\n");
-  return lines.slice(firstLine, lastLine);
-}
-function dummyEvent() {
-  return {
-    dispose() {
-    }
-  };
-}
-function createIDE(client, configuration) {
-  return new JetbrainsIDE(client, configuration);
 }
 
 // ../../node_modules/.pnpm/immer@11.1.21/node_modules/immer/dist/immer.mjs
@@ -16812,6 +16082,225 @@ var hasIteratorFrom = typeof _globalIterator?.from === "function";
 var immer = new Immer2();
 var produce = immer.produce;
 
+// ../../node_modules/.pnpm/uuid@14.0.3/node_modules/uuid/dist/stringify.js
+var byteToHex = [];
+for (let i3 = 0; i3 < 256; ++i3) {
+  byteToHex.push((i3 + 256).toString(16).slice(1));
+}
+function unsafeStringify(arr, offset2 = 0) {
+  return (byteToHex[arr[offset2 + 0]] + byteToHex[arr[offset2 + 1]] + byteToHex[arr[offset2 + 2]] + byteToHex[arr[offset2 + 3]] + "-" + byteToHex[arr[offset2 + 4]] + byteToHex[arr[offset2 + 5]] + "-" + byteToHex[arr[offset2 + 6]] + byteToHex[arr[offset2 + 7]] + "-" + byteToHex[arr[offset2 + 8]] + byteToHex[arr[offset2 + 9]] + "-" + byteToHex[arr[offset2 + 10]] + byteToHex[arr[offset2 + 11]] + byteToHex[arr[offset2 + 12]] + byteToHex[arr[offset2 + 13]] + byteToHex[arr[offset2 + 14]] + byteToHex[arr[offset2 + 15]]).toLowerCase();
+}
+
+// ../../node_modules/.pnpm/uuid@14.0.3/node_modules/uuid/dist/rng.js
+var rnds8 = new Uint8Array(16);
+function rng() {
+  return crypto.getRandomValues(rnds8);
+}
+
+// ../../node_modules/.pnpm/uuid@14.0.3/node_modules/uuid/dist/v4.js
+function v4(options2, buf, offset2) {
+  if (!buf && !options2 && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return _v4(options2, buf, offset2);
+}
+function _v4(options2, buf, offset2) {
+  options2 = options2 || {};
+  const rnds = options2.random ?? options2.rng?.() ?? rng();
+  if (rnds.length < 16) {
+    throw new Error("Random bytes length must be >= 16");
+  }
+  rnds[6] = rnds[6] & 15 | 64;
+  rnds[8] = rnds[8] & 63 | 128;
+  if (buf) {
+    offset2 = offset2 || 0;
+    if (offset2 < 0 || offset2 + 16 > buf.length) {
+      throw new RangeError(`UUID byte range ${offset2}:${offset2 + 15} is out of buffer bounds`);
+    }
+    for (let i3 = 0; i3 < 16; ++i3) {
+      buf[offset2 + i3] = rnds[i3];
+    }
+    return buf;
+  }
+  return unsafeStringify(rnds);
+}
+var v4_default = v4;
+
+// ../lib-engine/src/CommandHistory.ts
+var filePrefix = "cursorlessCommandHistory";
+var CommandHistory = class {
+  constructor(ide, storage, commandServerApi) {
+    __publicField(this, "ide", ide);
+    __publicField(this, "storage", storage);
+    __publicField(this, "commandServerApi", commandServerApi);
+    __publicField(this, "currentPhraseSignal", "");
+    __publicField(this, "currentPhraseId", "");
+  }
+  wrapCommandRunner(_readableHatMap, runner) {
+    if (!this.isActive()) {
+      return runner;
+    }
+    return {
+      run: async (commandComplete) => {
+        try {
+          const returnValue = await runner.run(commandComplete);
+          await this.appendToLog(commandComplete);
+          return returnValue;
+        } catch (error62) {
+          const err2 = error62 instanceof Error ? error62 : new Error(String(error62));
+          await this.appendToLog(commandComplete, err2);
+          throw error62;
+        }
+      }
+    };
+  }
+  async appendToLog(command, thrownError) {
+    const date5 = /* @__PURE__ */ new Date();
+    const fileName = `${filePrefix}_${getMonthDate(date5)}.jsonl`;
+    const historyItem = {
+      id: v4_default(),
+      date: getDayDate(date5),
+      cursorlessVersion: this.ide.cursorlessVersion,
+      error: thrownError?.name,
+      phraseId: await this.getPhraseId(),
+      command: produce(command, sanitizeCommandInPlace)
+    };
+    await this.storage.appendEntry(fileName, historyItem);
+  }
+  async getPhraseId() {
+    const phraseStartSignal = this.commandServerApi?.signals?.prePhrase;
+    if (phraseStartSignal == null) {
+      return void 0;
+    }
+    const newSignal = await phraseStartSignal.getVersion();
+    if (newSignal == null) {
+      return void 0;
+    }
+    if (newSignal !== this.currentPhraseSignal) {
+      this.currentPhraseSignal = newSignal;
+      this.currentPhraseId = v4_default();
+    }
+    return this.currentPhraseId;
+  }
+  isActive() {
+    return this.ide.configuration.getOwnConfiguration("commandHistory");
+  }
+};
+function sanitizeCommandInPlace(command) {
+  delete command.spokenForm;
+  sanitizeActionInPlace(command.action);
+}
+function sanitizeActionInPlace(action) {
+  switch (action.name) {
+    // Remove replace with text
+    case "replace":
+      if (Array.isArray(action.replaceWith)) {
+        action.replaceWith = [];
+      }
+      break;
+    // Remove substitutions and custom body
+    case "insertSnippet":
+      if (action.snippetDescription.type === "custom") {
+        action.snippetDescription.body = "";
+        delete action.snippetDescription.substitutions;
+      } else if (action.snippetDescription.type === "list") {
+        for (const snippet of action.snippetDescription.snippets) {
+          snippet.body = "";
+          delete snippet.substitutions;
+        }
+      }
+      break;
+    case "wrapWithSnippet":
+      if (action.snippetDescription.type === "custom") {
+        action.snippetDescription.body = "";
+      }
+      break;
+    case "executeCommand":
+      delete action.options?.commandArgs;
+      break;
+    case "addSelection":
+    case "addSelectionAfter":
+    case "addSelectionBefore":
+    case "breakLine":
+    case "callAsFunction":
+    case "clearAndSetSelection":
+    case "copyToClipboard":
+    case "cutToClipboard":
+    case "decrement":
+    case "deselect":
+    case "editNew":
+    case "editNewLineAfter":
+    case "editNewLineBefore":
+    case "experimental.setInstanceReference":
+    case "extractVariable":
+    case "findInDocument":
+    case "findInWorkspace":
+    case "flashTargets":
+    case "foldRegion":
+    case "followLink":
+    case "followLinkAside":
+    case "generateSnippet":
+    case "getText":
+    case "gitAccept":
+    case "gitRevert":
+    case "gitStage":
+    case "gitUnstage":
+    case "highlight":
+    case "increment":
+    case "indentLine":
+    case "insertCopyAfter":
+    case "insertCopyBefore":
+    case "insertEmptyLineAfter":
+    case "insertEmptyLineBefore":
+    case "insertEmptyLinesAround":
+    case "joinLines":
+    case "moveToTarget":
+    case "outdentLine":
+    case "parsed":
+    case "pasteFromClipboard":
+    case "private.getTargets":
+    case "private.setKeyboardTarget":
+    case "private.showParseTree":
+    case "randomizeTargets":
+    case "remove":
+    case "rename":
+    case "replaceWithTarget":
+    case "revealDefinition":
+    case "revealTypeDefinition":
+    case "reverseTargets":
+    case "rewrapWithPairedDelimiter":
+    case "scrollToBottom":
+    case "scrollToCenter":
+    case "scrollToTop":
+    case "setSelection":
+    case "setSelectionAfter":
+    case "setSelectionBefore":
+    case "showDebugHover":
+    case "showHover":
+    case "showQuickFix":
+    case "showReferences":
+    case "sortTargets":
+    case "swapTargets":
+    case "toggleLineBreakpoint":
+    case "toggleLineComment":
+    case "unfoldRegion":
+    case "wrapWithPairedDelimiter":
+      break;
+    default: {
+      const _exhaustiveCheck = action;
+    }
+  }
+}
+function getMonthDate(date5) {
+  return `${date5.getFullYear()}-${pad(date5.getMonth() + 1)}`;
+}
+function getDayDate(date5) {
+  return `${getMonthDate(date5)}-${pad(date5.getDate())}`;
+}
+function pad(num) {
+  return num.toString().padStart(2, "0");
+}
+
 // ../lib-engine/src/core/indexArrayStrict.ts
 function indexArrayStrict(arr, idx, name2) {
   if (idx >= arr.length) {
@@ -16851,10 +16340,10 @@ var import_nearley = __toESM(require_nearley(), 1);
 // ../lib-engine/src/spokenForms/SpokenFormMap.ts
 function mapSpokenForms(input2, mapper) {
   return Object.fromEntries(
-    Object.entries(input2).map(([spokenFormType, map3]) => [
+    Object.entries(input2).map(([spokenFormType, map4]) => [
       spokenFormType,
       Object.fromEntries(
-        Object.entries(map3).map(([id2, inputValue]) => [
+        Object.entries(map4).map(([id2, inputValue]) => [
           id2,
           mapper(inputValue, spokenFormType, id2)
         ])
@@ -18057,6 +17546,155 @@ function upgradeCommand(command, minimumVersion) {
 function validateCommand(_actionName, _partialTargets) {
 }
 
+// ../lib-engine/src/util/getScopeType.ts
+function getScopeType(modifier) {
+  switch (modifier.type) {
+    case "containingScope":
+    case "preferredScope":
+    case "everyScope":
+    case "ordinalScope":
+    case "relativeScope":
+      return modifier.scopeType;
+    case "interiorOnly":
+    case "excludeInterior":
+    case "visible":
+    case "toRawSelection":
+    case "inferPreviousMark":
+    case "keepContentFilter":
+    case "keepEmptyFilter":
+    case "leading":
+    case "trailing":
+    case "startOf":
+    case "endOf":
+    case "extendThroughStartOf":
+    case "extendThroughEndOf":
+    case "fallback":
+    case "range":
+    case "modifyIfUntyped":
+      return void 0;
+    default: {
+      const _exhaustiveCheck = modifier;
+    }
+  }
+}
+
+// ../lib-engine/src/CommandHistoryAnalyzer.ts
+var Period = class {
+  constructor(period, entries) {
+    __publicField(this, "period");
+    __publicField(this, "actions", {});
+    __publicField(this, "modifiers", {});
+    __publicField(this, "scopeTypes", {});
+    __publicField(this, "dates", /* @__PURE__ */ new Set());
+    __publicField(this, "commandCount");
+    __publicField(this, "decoratedMarkCommandCount", 0);
+    this.period = period;
+    this.commandCount = entries.length;
+    for (const entry of entries) {
+      this.append(entry);
+    }
+  }
+  toString() {
+    const avgCommandsPerDay = Math.round(this.commandCount / this.dates.size);
+    const percentageDecoratedMarkCommands = Math.round(
+      100 * this.decoratedMarkCommandCount / this.commandCount
+    );
+    const meta3 = [
+      `Command count: ${this.commandCount}`,
+      `Days used: ${this.dates.size}`,
+      `Average commands / day: ${avgCommandsPerDay}`,
+      `Commands with hats: ${this.decoratedMarkCommandCount} (${percentageDecoratedMarkCommands}%)`
+    ].join("\n");
+    return [
+      `# ${this.period}`,
+      meta3,
+      this.serializeMap("Actions", this.actions),
+      this.serializeMap("Modifiers", this.modifiers),
+      this.serializeMap("Scope types", this.scopeTypes)
+    ].join("\n\n");
+  }
+  serializeMap(name2, map4) {
+    const total = sum_default(Object.values(map4));
+    const entries = Object.entries(map4);
+    entries.sort((a2, b2) => b2[1] - a2[1]);
+    const entriesSerialized = entries.map(([key, value]) => `  ${key}: ${value} (${toPercent(value / total)})`).join("\n");
+    return `${name2}:
+${entriesSerialized}`;
+  }
+  append(entry) {
+    this.dates.add(entry.date);
+    const command = canonicalizeAndValidateCommand(entry.command);
+    this.incrementAction(command.action.name);
+    this.parsePrimitiveTargets(
+      getPartialPrimitiveTargets(getPartialTargetDescriptors(command.action))
+    );
+  }
+  parsePrimitiveTargets(partialPrimitiveTargets) {
+    let hasDecoratedMark = false;
+    for (const target of partialPrimitiveTargets) {
+      if (target.mark?.type === "decoratedSymbol") {
+        hasDecoratedMark = true;
+      }
+      for (const modifier of target.modifiers ?? []) {
+        this.incrementModifier(modifier);
+        const scopeType = getScopeType(modifier);
+        if (scopeType != null) {
+          this.incrementScope(scopeType);
+        }
+      }
+    }
+    if (hasDecoratedMark) {
+      this.decoratedMarkCommandCount++;
+    }
+  }
+  incrementAction(actionName) {
+    this.actions[actionName] = (this.actions[actionName] ?? 0) + 1;
+  }
+  incrementModifier(modifier) {
+    this.modifiers[modifier.type] = (this.modifiers[modifier.type] ?? 0) + 1;
+  }
+  incrementScope(scopeType) {
+    this.scopeTypes[scopeType.type] = (this.scopeTypes[scopeType.type] ?? 0) + 1;
+  }
+};
+function getMonth(entry) {
+  return entry.date.slice(0, 7);
+}
+async function analyzeCommandHistory(ide, commandHistoryStorage) {
+  const entries = await commandHistoryStorage.getEntries();
+  if (entries.length === 0) {
+    const TAKE_ME_THERE = "Show me";
+    const result = await showWarning(
+      ide.messages,
+      "noHistory",
+      "No command history entries found. Please enable the command history in the settings.",
+      TAKE_ME_THERE
+    );
+    if (result === TAKE_ME_THERE) {
+      await ide.executeCommand(
+        "workbench.action.openSettings",
+        "cursorless.commandHistory"
+      );
+    }
+    return;
+  }
+  const content = [
+    new Period("Totals", entries).toString(),
+    ...map_default(
+      Object.entries(groupBy_default(entries, getMonth)),
+      ([key, entries2]) => new Period(key, entries2).toString()
+    )
+  ].join("\n\n\n");
+  await ide.openUntitledTextDocument({ content });
+}
+function toPercent(value) {
+  return new Intl.NumberFormat(void 0, {
+    style: "percent",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1
+  }).format(value);
+}
+
 // ../lib-engine/src/core/UndoStack.ts
 var UndoStack = class {
   constructor(maxLength) {
@@ -18950,11 +18588,11 @@ var HatTokenMapImpl = class {
 };
 
 // ../lib-engine/src/util/map.ts
-function getDefault(map3, key, factory) {
-  let currentValue = map3.get(key);
+function getDefault(map4, key, factory) {
+  let currentValue = map4.get(key);
   if (currentValue == null) {
     currentValue = factory();
-    map3.set(key, currentValue);
+    map4.set(key, currentValue);
   }
   return currentValue;
 }
@@ -19623,10 +19261,10 @@ function getRangeConnective(spokenFormMap, excludeAnchor, excludeActive, type) {
 // ../lib-engine/src/generateSpokenForm/getSpokenFormComponentMap.ts
 function getSpokenFormComponentMap(spokenFormMap) {
   return Object.fromEntries(
-    Object.entries(spokenFormMap).map(([spokenFormType, map3]) => [
+    Object.entries(spokenFormMap).map(([spokenFormType, map4]) => [
       spokenFormType,
       Object.fromEntries(
-        Object.entries(map3).map(([id2, spokenForms]) => [
+        Object.entries(map4).map(([id2, spokenForms]) => [
           id2,
           {
             type: "customizable",
@@ -19944,8 +19582,8 @@ function pluralize(name2) {
 function pluralizeString(name2) {
   return `${name2}s`;
 }
-function getSpokenFormStrict(map3, typeName, key) {
-  const spokenForm = map3[key];
+function getSpokenFormStrict(map4, typeName, key) {
+  const spokenForm = map4[key];
   if (spokenForm == null) {
     throw new NoSpokenFormError(`${typeName} '${key}'`);
   }
@@ -20326,7 +19964,7 @@ function groupTargetsForEachEditor(targets) {
 }
 function groupForEachEditor(targets, getEditor2) {
   const getDocumentUri = (target) => getEditor2(target).document.uri;
-  const editorMap = groupBy(targets, getDocumentUri);
+  const editorMap = groupBy2(targets, getDocumentUri);
   return Array.from(editorMap.values(), (editorTargets) => {
     const editor = getEditor2(editorTargets[0]);
     return [editor, editorTargets];
@@ -24670,7 +24308,7 @@ __export(external_exports, {
   lt: () => _lt,
   lte: () => _lte,
   mac: () => mac2,
-  map: () => map2,
+  map: () => map3,
   maxLength: () => _maxLength,
   maxSize: () => _maxSize,
   memoizer: () => memoizer,
@@ -27567,13 +27205,13 @@ var CC_SANITIZE = /[- ]/g;
 function isLuhnAlgo(digits2) {
   let length = digits2.length;
   let bit = 1;
-  let sum = 0;
+  let sum2 = 0;
   while (length) {
     const value = digits2.charCodeAt(--length) - 48;
     bit ^= 1;
-    sum += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value] : value;
+    sum2 += bit ? [0, 2, 4, 6, 8, 1, 3, 5, 7, 9][value] : value;
   }
-  return sum % 10 === 0;
+  return sum2 % 10 === 0;
 }
 function isValidCreditCard(input2) {
   if (!creditCard.test(input2))
@@ -28358,33 +27996,33 @@ var $ZodXor = /* @__PURE__ */ $constructor("$ZodXor", (inst, def) => {
 });
 function getDiscriminatedOption(union3, value) {
   const internals = union3._zod;
-  let map3 = internals.bag.optionsMap;
-  if (!map3) {
-    map3 = discriminatorMap(internals.def);
-    internals.bag.optionsMap = map3;
+  let map4 = internals.bag.optionsMap;
+  if (!map4) {
+    map4 = discriminatorMap(internals.def);
+    internals.bag.optionsMap = map4;
   }
-  const option = map3.get(value);
+  const option = map4.get(value);
   if (option === null)
     throw new Error(`Ambiguous discriminator value "${String(value)}"`);
   return option;
 }
 function discriminatorMap(def) {
-  const map3 = /* @__PURE__ */ new Map();
+  const map4 = /* @__PURE__ */ new Map();
   for (const option of def.options) {
     const values2 = option._zod.propValues?.[def.discriminator];
     if (!values2 || values2.size === 0)
       throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(option)}"`);
     for (const value of values2) {
-      if (map3.has(value)) {
+      if (map4.has(value)) {
         if (value !== void 0)
           throw new Error(`Duplicate discriminator value "${String(value)}"`);
-        map3.set(value, null);
+        map4.set(value, null);
       } else {
-        map3.set(value, option);
+        map4.set(value, option);
       }
     }
   }
-  return map3;
+  return map4;
 }
 var $ZodDiscriminatedUnion = /* @__PURE__ */ $constructor("$ZodDiscriminatedUnion", (inst, def) => {
   def.inclusive = false;
@@ -41601,7 +41239,7 @@ __export(schemas_exports2, {
   looseObject: () => looseObject,
   looseRecord: () => looseRecord,
   mac: () => mac2,
-  map: () => map2,
+  map: () => map3,
   meta: () => meta2,
   nan: () => nan,
   nanoid: () => nanoid2,
@@ -42768,7 +42406,7 @@ var ZodMap = /* @__PURE__ */ $constructor("ZodMap", (inst, def) => {
   inst.max = (...args2) => inst.check(_maxSize(...args2));
   inst.size = (...args2) => inst.check(_size(...args2));
 });
-function map2(keyType, valueType, params) {
+function map3(keyType, valueType, params) {
   return new ZodMap({
     type: "map",
     keyType,
@@ -43223,9 +42861,9 @@ var ZodIssueCode = {
   invalid_value: "invalid_value",
   custom: "custom"
 };
-function setErrorMap(map3) {
+function setErrorMap(map4) {
   config({
-    customError: map3
+    customError: map4
   });
 }
 function getErrorMap() {
@@ -45076,7 +44714,7 @@ var TreeSitterQuery = class _TreeSitterQuery {
       }
     }
     const result = [];
-    const map3 = /* @__PURE__ */ new Map();
+    const map4 = /* @__PURE__ */ new Map();
     const expandedCaptures = aliases.size === 0 ? captures : expandCaptures(captures, aliases);
     for (const capture of expandedCaptures) {
       if (captureNameFilter != null && !captureNameFilter.has(getNormalizedCaptureIndex(capture.name))) {
@@ -45084,7 +44722,7 @@ var TreeSitterQuery = class _TreeSitterQuery {
       }
       const name2 = getNormalizedCaptureName(capture.name);
       const range3 = getStartOfEndOfRange(capture);
-      const existing = map3.get(name2);
+      const existing = map4.get(name2);
       if (existing == null) {
         const captures2 = [capture];
         const acc = {
@@ -45095,7 +44733,7 @@ var TreeSitterQuery = class _TreeSitterQuery {
           hasError: () => captures2.some((c2) => c2.hasError())
         };
         result.push(acc);
-        map3.set(name2, { acc, captures: captures2 });
+        map4.set(name2, { acc, captures: captures2 });
       } else {
         existing.acc.range = existing.acc.range.union(range3);
         (_a12 = existing.acc).allowMultiple || (_a12.allowMultiple = capture.allowMultiple);
@@ -45104,13 +44742,13 @@ var TreeSitterQuery = class _TreeSitterQuery {
       }
     }
     if (this.shouldCheckCaptures) {
-      checkCaptures(this.ide, Array.from(map3.values()));
+      checkCaptures(this.ide, Array.from(map4.values()));
     }
     return result;
   }
   createQueryCapturesWithoutPredicates(match, captureNameFilter, aliases) {
     const result = [];
-    const map3 = /* @__PURE__ */ new Map();
+    const map4 = /* @__PURE__ */ new Map();
     const expandedCaptures = aliases.size === 0 ? match.captures : expandCaptures(match.captures, aliases);
     for (const capture of expandedCaptures) {
       if (captureNameFilter != null && !captureNameFilter.has(getNormalizedCaptureIndex(capture.name))) {
@@ -45118,7 +44756,7 @@ var TreeSitterQuery = class _TreeSitterQuery {
       }
       const name2 = getNormalizedCaptureName(capture.name);
       const range3 = getStartOfEndOfNodeRange(capture.name, capture.node);
-      const existing = map3.get(name2);
+      const existing = map4.get(name2);
       if (existing == null) {
         const captures = [capture];
         const acc = {
@@ -45129,7 +44767,7 @@ var TreeSitterQuery = class _TreeSitterQuery {
           hasError: () => captures.some((c2) => isContainedInErrorNode(c2.node))
         };
         result.push(acc);
-        map3.set(name2, { acc, captures });
+        map4.set(name2, { acc, captures });
       } else {
         existing.acc.range = existing.acc.range.union(range3);
         existing.captures.push(capture);
@@ -45138,7 +44776,7 @@ var TreeSitterQuery = class _TreeSitterQuery {
     if (this.shouldCheckCaptures) {
       checkCaptures(
         this.ide,
-        Array.from(map3.values(), (v3) => ({
+        Array.from(map4.values(), (v3) => ({
           captures: v3.captures.map(
             (c2) => createTestQueryCapture(c2.name, getNodeRange(c2.node))
           )
@@ -50113,7 +49751,7 @@ function getLineTargetEdits(target) {
   const range3 = target.contentRange;
   const startLine = range3.start.line;
   const endLine = range3.isSingleLine ? Math.min(startLine + 1, document.lineCount - 1) : range3.end.line;
-  const lines = map(
+  const lines = map2(
     range2(startLine, endLine + 1),
     (i3) => document.lineAt(i3)
   );
@@ -50445,7 +50083,7 @@ var Scroll = class {
     this.run = this.run.bind(this);
   }
   async run(targets) {
-    const selectionGroups = groupBy(targets, (t2) => t2.editor);
+    const selectionGroups = groupBy2(targets, (t2) => t2.editor);
     const lines = Array.from(selectionGroups, ([editor, targets2]) => {
       return { lineNumber: getLineNumber(targets2, this.at), editor };
     });
@@ -52089,7 +51727,7 @@ function getIterationScopeRanges(editor, iterationScopeHandler, everyStage, iter
   const options2 = {
     multipleTargets: true
   };
-  return map(
+  return map2(
     iterationScopeHandler.generateScopes(
       editor,
       iterationRange.start,
@@ -52125,7 +51763,7 @@ function getEveryScopeLenient(everyStage, target, options2) {
 
 // ../lib-engine/src/scopeProviders/getScopeRanges.ts
 function getScopeRanges(editor, scopeHandler, iterationRange) {
-  return map(
+  return map2(
     scopeHandler.generateScopes(editor, iterationRange.start, "forward", {
       includeDescendantScopes: true,
       distalPosition: iterationRange.end
@@ -52749,6 +52387,837 @@ var argPositions = {
   $1: new ArgPosition(1),
   $2: new ArgPosition(2)
 };
+
+// src/ide/JetbrainsCommandHistoryStorage.ts
+var JetbrainsCommandHistoryStorage = class {
+  constructor(client) {
+    __publicField(this, "client", client);
+  }
+  async appendEntry(fileName, entry) {
+    this.client.commandHistoryAppend(fileName, JSON.stringify(entry));
+  }
+  async getEntries() {
+    return JSON.parse(this.client.commandHistoryEntries());
+  }
+};
+
+// src/ide/JetbrainsHats.ts
+var JetbrainsHats = class {
+  constructor(client) {
+    __publicField(this, "isEnabledNotifier", new Notifier());
+    __publicField(this, "hatStyleChangedNotifier", new Notifier());
+    __publicField(this, "hatRanges", []);
+    __publicField(this, "client");
+    __publicField(this, "enabledHatStyles");
+    __publicField(this, "enabledHatShapes", ["default"]);
+    __publicField(this, "hatShapePenalties", /* @__PURE__ */ new Map([["default", 0]]));
+    __publicField(this, "enabledHatColors", ["default"]);
+    __publicField(this, "hatColorPenalties", /* @__PURE__ */ new Map([["default", 0]]));
+    __publicField(this, "isEnabled", true);
+    this.client = client;
+    this.enabledHatStyles = this.generateHatStyles();
+  }
+  setHatRanges(hatRanges) {
+    this.hatRanges = hatRanges;
+    const jbHatRanges = this.toJetbransHatRanges(hatRanges);
+    const hatsJson = JSON.stringify(jbHatRanges);
+    this.client.hatsUpdated(hatsJson);
+    return Promise.resolve();
+  }
+  setEnabledHatShapes(enabledHatShapes) {
+    this.enabledHatShapes = enabledHatShapes;
+    this.enabledHatStyles = this.generateHatStyles();
+    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
+  }
+  setHatShapePenalties(hatShapePenalties) {
+    this.hatShapePenalties = new Map(
+      Object.entries(hatShapePenalties)
+    );
+    this.enabledHatStyles = this.generateHatStyles();
+    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
+  }
+  setEnabledHatColors(enabledHatColors) {
+    this.enabledHatColors = enabledHatColors;
+    this.enabledHatStyles = this.generateHatStyles();
+    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
+  }
+  setHatColorPenalties(hatColorPenalties) {
+    this.hatColorPenalties = new Map(
+      Object.entries(hatColorPenalties)
+    );
+    this.enabledHatStyles = this.generateHatStyles();
+    this.hatStyleChangedNotifier.notifyListeners(this.enabledHatStyles);
+  }
+  toJetbransHatRanges(hatRanges) {
+    return hatRanges.map((range3) => {
+      return {
+        styleName: range3.styleName,
+        editorId: range3.editor.id,
+        range: range3.range
+      };
+    });
+  }
+  generateHatStyles() {
+    const res = /* @__PURE__ */ new Map();
+    for (const color of this.enabledHatColors) {
+      const colorPenalty = this.getColorPenalty(color);
+      for (const shape of this.enabledHatShapes) {
+        const shapePenalty = this.getShapePenalty(shape);
+        let styleName;
+        if (shape === "default") {
+          styleName = color;
+        } else {
+          styleName = `${color}-${shape}`;
+        }
+        res.set(styleName, { penalty: colorPenalty + shapePenalty });
+      }
+    }
+    return Object.fromEntries(res);
+  }
+  getShapePenalty(shape) {
+    let shapePenalty = this.hatShapePenalties.get(shape);
+    if (shapePenalty == null) {
+      shapePenalty = shape === "default" ? 0 : 2;
+    } else {
+      shapePenalty = shape === "default" ? shapePenalty : shapePenalty + 1;
+    }
+    return shapePenalty;
+  }
+  getColorPenalty(color) {
+    let colorPenalty = this.hatColorPenalties.get(color);
+    if (colorPenalty == null) {
+      colorPenalty = color === "default" ? 0 : 1;
+    }
+    return colorPenalty;
+  }
+  onDidChangeEnabledHatStyles(listener) {
+    return this.hatStyleChangedNotifier.registerListener(listener);
+  }
+  onDidChangeIsEnabled(listener) {
+    return this.isEnabledNotifier.registerListener(listener);
+  }
+  toggle(isEnabled) {
+    this.isEnabled = isEnabled ?? !this.isEnabled;
+    this.isEnabledNotifier.notifyListeners(this.isEnabled);
+  }
+};
+
+// src/ide/JetbrainsTalonSpokenForms.ts
+var LATEST_SPOKEN_FORMS_JSON_VERSION = 1;
+var JetbrainsTalonSpokenForms = class {
+  constructor(client) {
+    __publicField(this, "client", client);
+    __publicField(this, "notifier", new Notifier());
+    __publicField(this, "onDidChange", this.notifier.registerListener);
+  }
+  notifyChanged() {
+    this.notifier.notifyListeners();
+  }
+  async getSpokenForms() {
+    const stateJson = this.client.readTalonSpokenForms();
+    if (stateJson == null) {
+      throw new NeedsInitialTalonUpdateError(
+        "Custom spoken forms file (~/.cursorless/state.json) not found. Using default spoken forms."
+      );
+    }
+    const payload = JSON.parse(stateJson);
+    if (payload.version > LATEST_SPOKEN_FORMS_JSON_VERSION) {
+      throw new Error(
+        `Unsupported spoken forms version ${payload.version}. Supported versions: 0-${LATEST_SPOKEN_FORMS_JSON_VERSION}`
+      );
+    }
+    return payload;
+  }
+};
+
+// src/ide/JetbrainsPlugin.ts
+var JetbrainsPlugin = class {
+  constructor(client, ide, hats, talonSpokenForms) {
+    __publicField(this, "client", client);
+    __publicField(this, "ide", ide);
+    __publicField(this, "hats", hats);
+    __publicField(this, "talonSpokenForms", talonSpokenForms);
+    /** Set by activate, once the engine's scope provider exists */
+    __publicField(this, "scopeVisualizer");
+    __publicField(this, "commandHistoryStorage");
+    this.commandHistoryStorage = new JetbrainsCommandHistoryStorage(client);
+  }
+  /** Talon's "cursorless stats": opens a report of the command history, as the VS Code extension does */
+  async analyzeCommandHistory() {
+    await analyzeCommandHistory(this.ide, this.commandHistoryStorage);
+  }
+  /**
+   * The cheat sheet for Talon's "cursorless cheat sheet", built from the user's spoken forms as the VS Code
+   * extension does; the IDE writes it into the cheatsheet page.
+   */
+  async getCheatsheetInfo() {
+    try {
+      const { spokenForms } = await this.talonSpokenForms.getSpokenForms();
+      return getCheatsheetInfo(spokenForms);
+    } catch (error62) {
+      console.error("Using default spoken forms for the cheat sheet: " + error62);
+      return getDefaultCheatsheetInfo();
+    }
+  }
+};
+function createPlugin(client, ide) {
+  const hats = new JetbrainsHats(client);
+  const talonSpokenForms = new JetbrainsTalonSpokenForms(client);
+  return new JetbrainsPlugin(client, ide, hats, talonSpokenForms);
+}
+
+// src/ide/JetbrainsConfiguration.ts
+var JetbrainsConfiguration = class {
+  constructor(configuration) {
+    __publicField(this, "notifier", new Notifier());
+    __publicField(this, "configuration", CONFIGURATION_DEFAULTS);
+    __publicField(this, "onDidChangeConfiguration", this.notifier.registerListener);
+    this.configuration = configuration;
+  }
+  getOwnConfiguration(path, _scope) {
+    return get_default(this.configuration, path);
+  }
+  updateConfiguration(configuration) {
+    this.configuration = configuration;
+    this.notifier.notifyListeners();
+  }
+};
+function createJetbrainsConfiguration(configuration) {
+  return new JetbrainsConfiguration(configuration);
+}
+
+// src/ide/JetbrainsCapabilities.ts
+var COMMAND_CAPABILITIES = {
+  clipboardCopy: { acceptsLocation: true },
+  clipboardPaste: true,
+  toggleLineComment: { acceptsLocation: true },
+  indentLine: { acceptsLocation: true },
+  outdentLine: { acceptsLocation: true },
+  rename: { acceptsLocation: true },
+  quickFix: { acceptsLocation: true },
+  revealDefinition: { acceptsLocation: true },
+  revealTypeDefinition: { acceptsLocation: true },
+  showHover: { acceptsLocation: true },
+  showDebugHover: { acceptsLocation: true },
+  extractVariable: { acceptsLocation: true },
+  fold: { acceptsLocation: true },
+  highlight: { acceptsLocation: true },
+  unfold: { acceptsLocation: true },
+  showReferences: { acceptsLocation: true },
+  insertLineAfter: { acceptsLocation: true },
+  gitAccept: { acceptsLocation: false },
+  gitRevert: { acceptsLocation: false },
+  gitStage: { acceptsLocation: false },
+  gitUnstage: { acceptsLocation: false }
+};
+var JetbrainsCapabilities = class {
+  constructor() {
+    __publicField(this, "commands", COMMAND_CAPABILITIES);
+  }
+};
+
+// src/ide/JetbrainsEvents.ts
+function fromJetbrainsContentChange(document, firstLine, lastLine, linedata) {
+  const result = [];
+  const text = linedata.join("\n");
+  const range3 = new Range(
+    new Position(firstLine, 0),
+    new Position(lastLine - 1, document.lineAt(lastLine - 1).text.length)
+  );
+  const rangeOffset = document.offsetAt(range3.start);
+  const rangeLength = document.offsetAt(range3.end) - rangeOffset;
+  result.push({
+    range: range3,
+    rangeOffset,
+    rangeLength,
+    text
+  });
+  return result;
+}
+
+// src/ide/JetbrainsClipboard.ts
+var JetbrainsClipboard = class {
+  constructor(client) {
+    __publicField(this, "client", client);
+  }
+  async readText() {
+    return "";
+  }
+  async writeText(_value) {
+    return;
+  }
+  async copy(editorId, ranges) {
+    const rangesJson = JSON.stringify(ranges);
+    this.client.clipboardCopy(editorId, rangesJson);
+  }
+  async paste(editorId) {
+    this.client.clipboardPaste(editorId);
+  }
+};
+
+// src/ide/JetbrainsMessages.ts
+var JetbrainsMessages = class {
+  constructor(client) {
+    __publicField(this, "client", client);
+  }
+  /**
+   * Shows the message as an IDE notification. The IDE doesn't wait for a choice, so options aren't offered and no
+   * option is returned.
+   */
+  async showMessage(type, id2, message, ..._options) {
+    this.client.showMessage(type, id2, message);
+    return void 0;
+  }
+};
+
+// src/ide/JetbrainsKeyValueStore.ts
+var JetbrainsKeyValueStore = class {
+  constructor(client) {
+    __publicField(this, "client", client);
+  }
+  get(key) {
+    const valueJson = this.client.keyValueGet(key);
+    return valueJson == null ? KEY_VALUE_STORE_DEFAULTS[key] : JSON.parse(valueJson);
+  }
+  set(key, value) {
+    this.client.keyValueSet(key, JSON.stringify(value));
+    return Promise.resolve();
+  }
+};
+
+// src/ide/setSelections.ts
+function setSelections(client, document, editorId, selections) {
+  const selectionsJson = JSON.stringify(selections);
+  client.setSelection(editorId, selectionsJson);
+  return Promise.resolve();
+}
+
+// src/ide/jetbrainsPerformEdits.ts
+function jetbrainsPerformEdits(client, ide, document, id2, edits) {
+  const changes = document.edit(edits);
+  const editorEdit = {
+    text: document.text,
+    changes: changes.map((change) => ({
+      rangeOffset: change.rangeOffset,
+      rangeLength: change.rangeLength,
+      text: change.text
+    }))
+  };
+  client.documentUpdated(id2, JSON.stringify(editorEdit));
+  ide.emitDidChangeTextDocument({
+    document,
+    contentChanges: changes
+  });
+}
+
+// src/ide/JetbrainsEditorCommand.ts
+var JetbrainsEditorCommand = class {
+  constructor(ranges, singleRange, restoreSelection, ideCommand) {
+    __publicField(this, "ranges", ranges);
+    __publicField(this, "singleRange", singleRange);
+    __publicField(this, "restoreSelection", restoreSelection);
+    __publicField(this, "ideCommand", ideCommand);
+  }
+};
+
+// src/ide/JetbrainsEditor.ts
+var JetbrainsEditor = class {
+  constructor(client, ide, id2, document, visibleRanges, selections) {
+    __publicField(this, "client", client);
+    __publicField(this, "ide", ide);
+    __publicField(this, "id", id2);
+    __publicField(this, "document", document);
+    __publicField(this, "visibleRanges", visibleRanges);
+    __publicField(this, "selections", selections);
+    __publicField(this, "options", {
+      tabSize: 4,
+      insertSpaces: true
+    });
+    __publicField(this, "isActive", true);
+    __publicField(this, "isVisible", true);
+    __publicField(this, "isEditable", true);
+    __publicField(this, "isWritable", true);
+  }
+  isEqual(other) {
+    return this.id === other.id;
+  }
+  async setSelections(selections, _opts) {
+    if (!selectionsEqual(this.selections, selections)) {
+      await setSelections(this.client, this.document, this.id, selections);
+      this.selections = selections;
+    }
+  }
+  edit(edits) {
+    if (!this.isWritable) {
+      return Promise.resolve(false);
+    }
+    jetbrainsPerformEdits(this.client, this.ide, this.document, this.id, edits);
+    return Promise.resolve(true);
+  }
+  async clipboardCopy(ranges) {
+    await this.ide.clipboard.copy(this.id, ranges);
+  }
+  async clipboardPaste() {
+    const changesJson = this.client.clipboardPaste(this.id);
+    if (!changesJson) {
+      return;
+    }
+    const pasteChanges = JSON.parse(changesJson);
+    for (const { rangeOffset, rangeLength, text } of pasteChanges) {
+      const range3 = new Range(
+        this.document.positionAt(rangeOffset),
+        this.document.positionAt(rangeOffset + rangeLength)
+      );
+      const contentChanges = this.document.edit([{ range: range3, text }]);
+      this.ide.emitDidChangeTextDocument({
+        document: this.document,
+        contentChanges
+      });
+    }
+  }
+  async indentLine(ranges) {
+    const command = new JetbrainsEditorCommand(
+      ranges ? ranges : [],
+      true,
+      true,
+      "EditorIndentSelection"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async outdentLine(ranges) {
+    const command = new JetbrainsEditorCommand(
+      ranges ? ranges : [],
+      true,
+      true,
+      "EditorUnindentSelection"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async insertLineAfter(ranges) {
+    await this.client.insertLineAfter(this.id, JSON.stringify(ranges));
+  }
+  async focus() {
+    await this.client.focusEditor(this.id);
+  }
+  revealRange(_range) {
+    return Promise.resolve();
+  }
+  async revealLine(lineNumber, at) {
+    await this.client.revealLine(this.id, lineNumber, at);
+  }
+  async openLink(range3, _options) {
+    const command = new JetbrainsEditorCommand(
+      [range3],
+      true,
+      false,
+      "GotoDeclaration"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async fold(ranges) {
+    const command = new JetbrainsEditorCommand(
+      ranges ? ranges : [],
+      true,
+      false,
+      "CollapseRegion"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async unfold(ranges) {
+    const command = new JetbrainsEditorCommand(
+      ranges ? ranges : [],
+      true,
+      false,
+      "ExpandRegion"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async toggleBreakpoint(ranges) {
+    for (const range3 of ranges ?? []) {
+      const position = range3.type === "line" ? new Position(range3.start, 0) : range3.start;
+      const command = new JetbrainsEditorCommand(
+        [new Range(position, position)],
+        true,
+        false,
+        "ToggleLineBreakpoint"
+      );
+      await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    }
+  }
+  async toggleLineComment(ranges) {
+    const command = new JetbrainsEditorCommand(
+      ranges ? ranges : [],
+      true,
+      false,
+      "CommentByLineComment"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async insertSnippet(snippet, ranges) {
+    console.log("insertSnippet" + snippet);
+    if (ranges != null) {
+      await this.setSelections(ranges.map((range3) => Selection.fromRange(range3)));
+    }
+    await this.client.insertSnippet(this.id, snippet);
+  }
+  async rename(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "RenameElement"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async showReferences(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "FindUsages"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async quickFix(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "ShowIntentionActions"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async revealDefinition(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "GotoDeclaration"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async revealTypeDefinition(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "QuickImplementations"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async showHover(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "QuickJavaDoc"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async showDebugHover(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "QuickEvaluateExpression"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  async extractVariable(range3) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      false,
+      "IntroduceVariable"
+    );
+    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+  }
+  editNewNotebookCellAbove() {
+    throw new Error("editNewNotebookCellAbove not implemented.");
+  }
+  editNewNotebookCellBelow() {
+    throw new Error("editNewNotebookCellBelow not implemented.");
+  }
+  async gitAccept(_range) {
+    throw new Error("gitAccept not implemented.");
+  }
+  async gitRevert(_range) {
+    throw new Error("gitRevert not implemented.");
+  }
+  async gitStageFile() {
+    throw new Error("gitStageFile not implemented.");
+  }
+  async gitUnstageFile() {
+    throw new Error("gitUnstageFile not implemented.");
+  }
+  async gitStageRange(_range) {
+    throw new Error("gitStageRange not implemented.");
+  }
+  async gitUnstageRange(_range) {
+    throw new Error("gitUnstageRange not implemented.");
+  }
+};
+
+// src/ide/createTextEditor.ts
+function createTextEditor(client, ide, editorState) {
+  const id2 = editorState.id;
+  const uri = u.parse(`talon-jetbrains://${id2}`);
+  const languageId = editorState.languageId ?? "plaintext";
+  const document = new InMemoryTextDocument(uri, languageId, editorState.text);
+  const visibleRanges = [
+    new Range(editorState.firstVisibleLine, 0, editorState.lastVisibleLine, 0)
+  ];
+  const selections = editorState.selections.map(
+    (selection) => createSelection(document, selection)
+  );
+  const editor = new JetbrainsEditor(
+    client,
+    ide,
+    id2,
+    document,
+    visibleRanges,
+    selections
+  );
+  editor.isActive = editorState.active;
+  editor.isVisible = editorState.visible;
+  editor.isEditable = editorState.editable;
+  editor.isWritable = editorState.writable;
+  return editor;
+}
+function createSelection(document, selection) {
+  return new Selection(
+    createPosition(selection.anchor),
+    createPosition(selection.active)
+  );
+}
+function createPosition(jbPosition) {
+  return new Position(jbPosition.line, jbPosition.column);
+}
+
+// src/ide/JetbrainsIDE.ts
+var JetbrainsIDE = class {
+  constructor(client, configuration) {
+    __publicField(this, "client", client);
+    __publicField(this, "configuration");
+    __publicField(this, "keyValueStore");
+    __publicField(this, "messages");
+    __publicField(this, "clipboard");
+    __publicField(this, "capabilities");
+    __publicField(this, "runMode", "production");
+    __publicField(this, "visibleNotebookEditors", []);
+    //   private editorMap;
+    //   private documentMap;
+    __publicField(this, "activeProject");
+    __publicField(this, "activeEditor");
+    __publicField(this, "disposables", []);
+    __publicField(this, "assetsRoot_");
+    __publicField(this, "cursorlessJetbrainsPath");
+    __publicField(this, "quickPickReturnValue");
+    __publicField(this, "editors", /* @__PURE__ */ new Map());
+    __publicField(this, "onDidChangeTextDocumentNotifier", new Notifier());
+    __publicField(this, "onDidOpenTextDocumentNotifier", new Notifier());
+    __publicField(this, "onDidChangeTextDocumentContentNotifier", new Notifier());
+    __publicField(this, "onDidCloseTextDocument", dummyEvent);
+    __publicField(this, "onDidChangeActiveTextEditor", dummyEvent);
+    __publicField(this, "onDidChangeVisibleTextEditors", dummyEvent);
+    __publicField(this, "onDidChangeTextEditorSelection", dummyEvent);
+    __publicField(this, "onDidChangeTextEditorVisibleRanges", dummyEvent);
+    this.configuration = configuration;
+    this.keyValueStore = new JetbrainsKeyValueStore(this.client);
+    this.messages = new JetbrainsMessages(this.client);
+    this.clipboard = new JetbrainsClipboard(this.client);
+    this.capabilities = new JetbrainsCapabilities();
+    this.activeProject = void 0;
+    this.activeEditor = void 0;
+  }
+  async init() {
+  }
+  async showQuickPick(_items, _options) {
+    throw Error("showQuickPick Not implemented");
+  }
+  async setHighlightRanges(highlightId, editor, ranges) {
+    const editorId = editor.id;
+    const rangesJson = JSON.stringify(ranges);
+    this.client.setHighlightRanges(highlightId, editorId, rangesJson);
+  }
+  async flashRanges(flashDescriptors) {
+    console.log("flashRangeses");
+    const jbfs = flashDescriptors.map((flashDescriptor) => {
+      const jbf = {
+        editorId: flashDescriptor.editor.id,
+        range: flashDescriptor.range,
+        style: flashDescriptor.style
+      };
+      return jbf;
+    });
+    this.client.flashRanges(JSON.stringify(jbfs));
+  }
+  get assetsRoot() {
+    console.log("get assetsRoot");
+    throw new Error("assetsRoot not implemented.");
+  }
+  get cursorlessVersion() {
+    return `jetbrains-${this.client.pluginVersion()}`;
+  }
+  get workspaceFolders() {
+    console.log("get workspaceFolders");
+    throw new Error("workspaceFolders not get implemented.");
+  }
+  get activeTextEditor() {
+    return this.activeEditor;
+  }
+  get activeEditableTextEditor() {
+    return this.activeEditor?.isEditable ? this.activeEditor : void 0;
+  }
+  get visibleTextEditors() {
+    return [...this.editors.values()].filter((editor) => editor.isVisible);
+  }
+  getEditableTextEditor(editor) {
+    if (editor instanceof JetbrainsEditor) {
+      if (editor.isEditable) {
+        return editor;
+      } else {
+        throw Error(`Editor is not editable: ${editor}`);
+      }
+    }
+    throw Error(`Unsupported text editor type: ${editor}`);
+  }
+  async findInDocument(query, editor) {
+    const editorId = (editor ?? this.activeEditor)?.id;
+    if (editorId == null) {
+      throw Error("findInDocument: no editor to search in");
+    }
+    this.client.findInDocument(editorId, query);
+  }
+  async findInWorkspace(query) {
+    const editorId = this.activeEditor?.id;
+    if (editorId == null) {
+      throw Error("findInWorkspace: no active editor");
+    }
+    this.client.findInWorkspace(editorId, query);
+  }
+  async openTextDocument(_path) {
+    throw Error("openTextDocument Not implemented");
+  }
+  async openUntitledTextDocument(options2 = {}) {
+    const editorState = JSON.parse(
+      this.client.openUntitledTextDocument(
+        options2.content ?? "",
+        options2.language ?? null
+      )
+    );
+    return this.updateTextEditors(editorState);
+  }
+  async showInputBox(options2) {
+    return this.client.showInputBox(JSON.stringify(options2 ?? {})) ?? void 0;
+  }
+  async executeCommand(command, ...args2) {
+    const editorId = this.activeEditor?.id;
+    if (editorId == null) {
+      throw Error(`executeCommand ${command}: no active editor`);
+    }
+    this.client.executeCommand(editorId, command, JSON.stringify(args2));
+    return void 0;
+  }
+  onDidChangeTextDocument(listener) {
+    return this.onDidChangeTextDocumentNotifier.registerListener(listener);
+  }
+  onDidOpenTextDocument(listener, _thisArgs, _disposables) {
+    return this.onDidOpenTextDocumentNotifier.registerListener(listener);
+  }
+  handleCommandError(_err) {
+  }
+  disposeOnExit(...disposables) {
+    this.disposables.push(...disposables);
+    return () => pull_default(this.disposables, ...disposables);
+  }
+  documentClosed(editorId) {
+    this.editors.delete(editorId);
+  }
+  documentCreated(editorStateJson) {
+    this.documentChanged(editorStateJson);
+    const editorState = editorStateJson;
+    const editor = this.editors.get(editorState.id);
+    if (editor) {
+      this.onDidOpenTextDocumentNotifier.notifyListeners(editor.document);
+    }
+  }
+  documentChanged(editorStateJson) {
+    const editorState = editorStateJson;
+    const editor = this.updateTextEditors(editorState);
+    const linedata = getLines(
+      editorState.text,
+      editorState.firstVisibleLine,
+      editorState.lastVisibleLine
+    );
+    const contentChangeEvents = fromJetbrainsContentChange(
+      editor.document,
+      editorState.firstVisibleLine,
+      editorState.lastVisibleLine,
+      linedata
+    );
+    const documentChangeEvent = {
+      document: editor.document,
+      contentChanges: contentChangeEvents
+    };
+    this.emitDidChangeTextDocument(documentChangeEvent);
+  }
+  emitDidChangeTextDocument(event) {
+    this.onDidChangeTextDocumentNotifier.notifyListeners(event);
+  }
+  updateTextEditors(editorState) {
+    let editor = this.editors.get(editorState.id);
+    if (editor) {
+      updateEditor(editor, editorState);
+    } else {
+      editor = createTextEditor(this.client, this, editorState);
+      this.editors.set(editorState.id, editor);
+    }
+    if (editorState.active) {
+      this.activeEditor = editor;
+    }
+    return editor;
+  }
+  readQuery(filename) {
+    return this.client.readQuery(filename);
+  }
+};
+function updateEditor(editor, editorState) {
+  const oldDocument = editor.document;
+  editor.document = new InMemoryTextDocument(
+    oldDocument.uri,
+    oldDocument.languageId,
+    editorState.text
+  );
+  editor.visibleRanges = [
+    new Range(
+      editorState.firstVisibleLine,
+      0,
+      editorState.lastVisibleLine + 1,
+      0
+    )
+  ];
+  editor.selections = editorState.selections.map(
+    (selection) => createSelection(editor.document, selection)
+  );
+  editor.isActive = editorState.active;
+  editor.isVisible = editorState.visible;
+  editor.isEditable = editorState.editable;
+  editor.isWritable = editorState.writable;
+}
+function getLines(text, firstLine, lastLine) {
+  const lines = text.split("\n");
+  return lines.slice(firstLine, lastLine);
+}
+function dummyEvent() {
+  return {
+    dispose() {
+    }
+  };
+}
+function createIDE(client, configuration) {
+  return new JetbrainsIDE(client, configuration);
+}
 
 // ../../node_modules/.pnpm/web-tree-sitter@0.27.1/node_modules/web-tree-sitter/web-tree-sitter.js
 var __defProp2 = Object.defineProperty;
@@ -57054,6 +57523,13 @@ async function activate(plugin, wasmDirectory) {
     talonSpokenForms: plugin.talonSpokenForms,
     snippets: new JetbrainsSnippets(plugin.client, plugin.ide)
   });
+  engine.addCommandRunnerDecorator(
+    new CommandHistory(
+      plugin.ide,
+      plugin.commandHistoryStorage,
+      commandServerApi
+    )
+  );
   plugin.scopeVisualizer = new JetbrainsScopeVisualizer(
     plugin.client,
     engine.scopeProvider

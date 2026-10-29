@@ -27,4 +27,8 @@ interface CursorlessCallback {
     fun readTalonSpokenForms(): String?
     fun showInputBox(optionsJson: String): String?
     fun openSnippetFile(snippetName: String, directory: String): String
+    fun commandHistoryAppend(fileName: String, entryJson: String)
+    fun commandHistoryEntries(): String
+    fun openUntitledTextDocument(content: String, language: String?): String
+    fun showMessage(type: String, id: String, message: String)
 }

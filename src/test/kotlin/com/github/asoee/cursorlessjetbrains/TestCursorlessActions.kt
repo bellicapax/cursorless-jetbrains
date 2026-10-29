@@ -8,6 +8,8 @@ import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorServiceTest.
 import com.github.asoee.cursorlessjetbrains.cursorless.*
 import com.github.asoee.cursorlessjetbrains.services.TalonProjectService
 import com.intellij.find.EditorSearchSession
+import com.intellij.notification.Notifications
+import com.intellij.notification.Notification
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.service
@@ -828,6 +830,52 @@ class TestCursorlessActions : BasePlatformTestCase() {
         runInEdtAndWait {
             assertEquals("println", fixture.editor.selectionModel.selectedText)
             assertFalse(UndoManager.getInstance(fixture.project).isUndoAvailable(textEditor))
+        }
+    }
+
+    @Test
+    fun testCommandHistoryIsRecordedOnlyWhenEnabledAndStatsOpensAReport() {
+        val fixture = mainJavaFixture()
+        val service = fixture.projectService
+        val historyDir = Files.createTempDirectory("cursorless-history")
+        service.editorManager.commandHistoryFiles = CommandHistoryFiles(historyDir)
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+        val take = listOf(actionCommand("""{"name": "setSelection", "target": ${targetJson(target)}}"""))
+
+        // Off by default, as in VS Code
+        assertNull(service.cursorlessEngine.executeCommand(take).error)
+        assertEquals(0, historyDir.toFile().list()!!.size)
+
+        // With no history, stats warns instead of opening a report
+        val notifications = mutableListOf<Notification>()
+        fixture.project.messageBus.connect(testRootDisposable)
+            .subscribe(Notifications.TOPIC, object : Notifications {
+                override fun notify(notification: Notification) {
+                    notifications.add(notification)
+                }
+            })
+        service.cursorlessEngine.analyzeCommandHistory()
+        runInEdtAndWait {
+            assertTrue(notifications.any { it.content.contains("No command history entries found") })
+        }
+
+        service.cursorlessEngine.setCommandHistory(true)
+        try {
+            assertNull(service.cursorlessEngine.executeCommand(take).error)
+            val historyFile = historyDir.toFile().listFiles()!!.single()
+            assertTrue(historyFile.name.startsWith("cursorlessCommandHistory_"))
+            assertTrue(historyFile.readText().contains("\"setSelection\""))
+
+            service.cursorlessEngine.analyzeCommandHistory()
+
+            runInEdtAndWait {
+                val report = FileEditorManager.getInstance(fixture.project).selectedTextEditor!!.document.text
+                assertTrue(report, report.contains("# Totals"))
+                assertTrue(report, report.contains("Command count: 1"))
+                assertTrue(report, report.contains("setSelection"))
+            }
+        } finally {
+            service.cursorlessEngine.setCommandHistory(false)
         }
     }
 

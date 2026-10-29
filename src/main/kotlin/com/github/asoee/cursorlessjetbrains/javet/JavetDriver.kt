@@ -14,6 +14,7 @@ import com.caoccao.javet.values.reference.V8ValueError
 import com.caoccao.javet.values.reference.V8ValuePromise
 import com.github.asoee.cursorlessjetbrains.cursorless.CursorlessCallback
 import com.github.asoee.cursorlessjetbrains.cursorless.DEFAULT_CONFIGURATION
+import com.github.asoee.cursorlessjetbrains.cursorless.CursorlessConfiguration
 import com.github.asoee.cursorlessjetbrains.cursorless.TreesitterCallback
 import com.github.asoee.cursorlessjetbrains.sync.EditorState
 import com.intellij.openapi.application.PathManager
@@ -555,6 +556,32 @@ open class JavetDriver {
         val result = callback.result
         callback.clear()
         return result
+    }
+
+    /** Talon's "cursorless stats": the engine opens a report of the command history, or warns that there is none */
+    fun analyzeCommandHistory() {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   await plugin.analyzeCommandHistory();
+            |   return "{}";
+            | })();
+            | """.trimMargin()
+
+        val callback = PromiseCallback()
+        runtime.getExecutor(js)
+            .execute<V8ValuePromise>().use { promise ->
+                promise.register(callback)
+                eventLoop.await()
+            }
+        callback.clear()
+    }
+
+    fun updateConfiguration(configuration: CursorlessConfiguration) {
+        val js = """
+            | globalThis.configuration?.updateConfiguration(${Json.encodeToString(configuration)});
+            | """.trimMargin()
+        runtime.getExecutor(js).executeVoid()
     }
 
     fun showScopeVisualizer(scopeTypeJson: String, visualizationType: String) {
