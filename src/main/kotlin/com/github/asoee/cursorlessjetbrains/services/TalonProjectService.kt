@@ -168,6 +168,8 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
     }
 
     private fun updateCursorlessEngineSettings(settings: TalonSettings.State) {
+        cursorlessEngine.setCommandHistory(settings.commandHistory)
+
         val enabledShapes = settings.hatShapeSettings
             .filter { it.enabled }
             .map { it.shapeName }

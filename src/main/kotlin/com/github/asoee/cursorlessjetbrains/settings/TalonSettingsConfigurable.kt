@@ -79,6 +79,13 @@ internal class TalonSettingsConfigurable : BoundConfigurable(DISPLAY_NAME, ID) {
                         .comment("Keeps the hats drawn here in step with the hats Talon recognizes: cursorless.hatEnablement and cursorless.hatPenalties")
                 }
             }
+            group("Command history") {
+                row {
+                    checkBox("Record command history")
+                        .bindSelected(settings.state::commandHistory)
+                        .comment("Saves each command (without its spoken form or text) to ~/.cursorless/commandHistory, as VS Code's cursorless.commandHistory does, for \"cursorless stats\"")
+                }
+            }
             group("Colors") {
                 row {
                     label("Color settings")

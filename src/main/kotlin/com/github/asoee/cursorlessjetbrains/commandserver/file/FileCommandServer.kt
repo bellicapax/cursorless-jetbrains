@@ -120,7 +120,7 @@ class FileCommandServer {
                 if (response.error != null) {
                     Notifications.Bus.notify(
                         Notification(
-                            "vc-idea",
+                            "Cursorless",
                             "Cursorless error",
                             response.error,
                             NotificationType.WARNING,
@@ -132,7 +132,7 @@ class FileCommandServer {
             logger.error("Failed to process file command", e)
             Notifications.Bus.notify(
                 Notification(
-                    "vc-idea",
+                    "Cursorless",
                     "Cursorless error",
                     e.message ?: e.toString(),
                     NotificationType.WARNING,

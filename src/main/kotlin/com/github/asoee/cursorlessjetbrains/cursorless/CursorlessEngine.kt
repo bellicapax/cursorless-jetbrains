@@ -45,6 +45,14 @@ class CursorlessEngine(private val driver: JavetDriver) {
         return listOf(jsonElement as JsonObject)
     }
 
+    fun analyzeCommandHistory() {
+        driver.analyzeCommandHistory()
+    }
+
+    fun setCommandHistory(enabled: Boolean) {
+        driver.updateConfiguration(DEFAULT_CONFIGURATION.copy(commandHistory = enabled))
+    }
+
     fun cheatsheetInfo(): JsonElement? {
         return driver.cheatsheetInfo()
     }

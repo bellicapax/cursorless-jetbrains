@@ -277,6 +277,20 @@ class CountingCallback : CursorlessCallback {
         return null
     }
 
+    override fun commandHistoryAppend(fileName: String, entryJson: String) {
+    }
+
+    override fun commandHistoryEntries(): String {
+        return "[]"
+    }
+
+    override fun openUntitledTextDocument(content: String, language: String?): String {
+        throw UnsupportedOperationException()
+    }
+
+    override fun showMessage(type: String, id: String, message: String) {
+    }
+
     override fun executeCommand(editorId: String, command: String, args: Array<String>) {
         println("Not yet implemented")
     }

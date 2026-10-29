@@ -1,5 +1,7 @@
 package com.github.asoee.cursorlessjetbrains.javet
 
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.ide.plugins.PluginManagerCore
 import com.caoccao.javet.annotations.V8Function
 import com.github.asoee.cursorlessjetbrains.cursorless.*
 import com.github.asoee.cursorlessjetbrains.sync.HatRange
@@ -110,6 +112,22 @@ class IdeClientCallback {
 
         override fun openSnippetFile(snippetName: String, directory: String): String {
             throw IllegalStateException("CursorlessCallback not set")
+        }
+
+        override fun commandHistoryAppend(fileName: String, entryJson: String) {
+            println("ASOEE/PLUGIN: CursorlessCallback not set")
+        }
+
+        override fun commandHistoryEntries(): String {
+            return "[]"
+        }
+
+        override fun openUntitledTextDocument(content: String, language: String?): String {
+            throw IllegalStateException("CursorlessCallback not set")
+        }
+
+        override fun showMessage(type: String, id: String, message: String) {
+            println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
 
     }
@@ -258,6 +276,35 @@ class IdeClientCallback {
     fun openSnippetFile(snippetName: String, directory: String): String {
         logger.info("IdeClientCallback.openSnippetFile: $snippetName in $directory")
         return cursorlessCallback.openSnippetFile(snippetName, directory)
+    }
+
+    @V8Function
+    fun commandHistoryAppend(fileName: String, entryJson: String) {
+        cursorlessCallback.commandHistoryAppend(fileName, entryJson)
+    }
+
+    @V8Function
+    fun commandHistoryEntries(): String {
+        return cursorlessCallback.commandHistoryEntries()
+    }
+
+    @V8Function
+    fun openUntitledTextDocument(content: String, language: String?): String {
+        logger.info("IdeClientCallback.openUntitledTextDocument: $language")
+        return cursorlessCallback.openUntitledTextDocument(content, language)
+    }
+
+    @V8Function
+    fun showMessage(type: String, id: String, message: String) {
+        logger.info("IdeClientCallback.showMessage: $type $id $message")
+        cursorlessCallback.showMessage(type, id, message)
+    }
+
+    @V8Function
+    fun pluginVersion(): String {
+        return runCatching {
+            PluginManagerCore.getPlugin(PluginId.getId("com.github.asoee.cursorlessjetbrains"))?.version
+        }.getOrNull() ?: "unknown"
     }
 
     @V8Function

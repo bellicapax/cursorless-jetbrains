@@ -27,6 +27,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.testFramework.LightVirtualFile
 import kotlinx.serialization.json.Json
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -172,6 +175,9 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         }
     }
 
+
+    // Replaceable so tests keep their history out of the real ~/.cursorless
+    internal var commandHistoryFiles = CommandHistoryFiles()
 
     // Set while a Cursorless command runs: IntelliJ merges consecutive undoable commands that share a group ID, so
     // its edits and selection changes undo together, as one step, as they do in VS Code
@@ -596,6 +602,44 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
                 editorState = editorManager.editorStateNow(editor)
             }
             return Json.encodeToString(editorState)
+        }
+
+        override fun commandHistoryAppend(fileName: String, entryJson: String) {
+            editorManager.commandHistoryFiles.append(fileName, entryJson)
+        }
+
+        override fun commandHistoryEntries(): String {
+            return editorManager.commandHistoryFiles.entriesJson()
+        }
+
+        override fun openUntitledTextDocument(content: String, language: String?): String {
+            val project = editorManager.editorsById.values.firstNotNullOfOrNull { it.project }
+                ?: throw IllegalStateException("No project to open the document in")
+            val extension = when (language) {
+                null, "plaintext" -> "txt"
+                "markdown" -> "md"
+                else -> language
+            }
+            var editorState: EditorState? = null
+            ApplicationManager.getApplication().invokeAndWait {
+                val file = LightVirtualFile("Untitled.$extension", content)
+                val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
+                    ?: throw IllegalStateException("Cannot open an editor for the new document")
+                editorState = editorManager.editorStateNow(editor)
+            }
+            return Json.encodeToString(editorState)
+        }
+
+        override fun showMessage(type: String, id: String, message: String) {
+            val notificationType = when (type) {
+                "error" -> NotificationType.ERROR
+                "warning" -> NotificationType.WARNING
+                else -> NotificationType.INFORMATION
+            }
+            val project = editorManager.editorsById.values.firstNotNullOfOrNull { it.project }
+            NotificationGroupManager.getInstance().getNotificationGroup("Cursorless")
+                .createNotification("Cursorless", message, notificationType)
+                .notify(project)
         }
 
         override fun focusEditor(editorId: String) {
