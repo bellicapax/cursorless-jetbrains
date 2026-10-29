@@ -5,6 +5,7 @@ import com.github.asoee.cursorlessjetbrains.javet.JavetDriver
 import com.github.asoee.cursorlessjetbrains.sync.EditorState
 import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 
@@ -42,6 +43,10 @@ class CursorlessEngine(private val driver: JavetDriver) {
     fun serialize(cmd: CommandV7): List<JsonObject> {
         val jsonElement = Json.encodeToJsonElement(cmd)
         return listOf(jsonElement as JsonObject)
+    }
+
+    fun cheatsheetInfo(): JsonElement? {
+        return driver.cheatsheetInfo()
     }
 
     fun showScopeVisualizer(scopeTypeJson: String, visualizationType: String) {

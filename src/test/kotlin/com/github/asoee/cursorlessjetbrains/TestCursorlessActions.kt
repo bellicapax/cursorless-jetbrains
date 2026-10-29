@@ -1,6 +1,7 @@
 package com.github.asoee.cursorlessjetbrains
 
 import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorService
+import com.github.asoee.cursorlessjetbrains.commands.ShowCheatsheetCommand
 import com.github.asoee.cursorlessjetbrains.commandserver.file.CommandServerRequest
 import com.github.asoee.cursorlessjetbrains.commandserver.file.FileCommandServer
 import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorServiceTest.MainJavaFixture
@@ -675,6 +676,33 @@ class TestCursorlessActions : BasePlatformTestCase() {
         engine.hideScopeVisualizer()
 
         await.atMost(2, TimeUnit.SECONDS).until { scopeHighlighters().isEmpty() }
+    }
+
+    @Test
+    fun testCheatsheetIsWrittenWithSpokenForms() {
+        val fixture = mainJavaFixture()
+        val outputPath = Files.createTempDirectory("cursorless-cheatsheet").resolve("cheatsheet.html")
+
+        val command = ShowCheatsheetCommand.fromArgs(
+            fixture.project, listOf("""{"version": 1, "outputPath": ${Json.encodeToString(outputPath.toString())}}""")
+        )!!
+        fixture.commandExecutorService.execute(command)
+
+        val html = Files.readString(outputPath)
+        val data = html.substringAfter("document.cheatsheetInfo = ").substringBefore(";\n")
+        val sections = (Json.parseToJsonElement(data.substringBefore("</script>").trimEnd(';')) as JsonObject)["sections"]
+        assertTrue(html.contains("<script id=\"cheatsheet-data\">document.cheatsheetInfo = {\"sections\":"))
+        assertNotNull(sections)
+        assertTrue(sections.toString(), sections.toString().contains("\"name\":\"Actions\""))
+    }
+
+    @Test
+    fun testCheatsheetInjectionEscapesScriptEnd() {
+        val html = ShowCheatsheetCommand.injectCheatsheetInfo(
+            "<html><script id=\"cheatsheet-data\">old</script></html>",
+            JsonPrimitive("</script><b>")
+        )
+        assertEquals("<html><script id=\"cheatsheet-data\">document.cheatsheetInfo = \"\\u003c/script>\\u003cb>\";</script></html>", html)
     }
 
     private fun targetJson(target: CursorlessTarget): String {
