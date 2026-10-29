@@ -38,8 +38,9 @@ class IdeClientCallback {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
 
-        override fun clipboardPaste(editorId: String) {
+        override fun clipboardPaste(editorId: String): String? {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
+            return null
         }
 
         override fun executeCommand(editorId: String, command: String, args: Array<String>) {
@@ -152,9 +153,9 @@ class IdeClientCallback {
     }
 
     @V8Function
-    fun clipboardPaste(editorId: String) {
-        logger.info("IdeClientCallback.clipboardCopy")
-        cursorlessCallback.clipboardPaste(editorId)
+    fun clipboardPaste(editorId: String): String? {
+        logger.info("IdeClientCallback.clipboardPaste")
+        return cursorlessCallback.clipboardPaste(editorId)
     }
 
     @V8Function

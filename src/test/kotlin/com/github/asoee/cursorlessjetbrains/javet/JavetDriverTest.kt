@@ -273,8 +273,8 @@ class CountingCallback : CursorlessCallback {
 //        println("Not yet implemented")
     }
 
-    override fun clipboardPaste(editorId: String) {
-//        println("Not yet implemented")
+    override fun clipboardPaste(editorId: String): String? {
+        return null
     }
 
     override fun executeCommand(editorId: String, command: String, args: Array<String>) {
