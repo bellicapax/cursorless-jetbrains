@@ -537,6 +537,26 @@ open class JavetDriver {
 
     }
 
+    /** The cheat sheet built from Talon's spoken forms, as JSON (CheatsheetInfo). */
+    fun cheatsheetInfo(): JsonElement? {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   return JSON.stringify(await plugin.getCheatsheetInfo());
+            | })();
+            | """.trimMargin()
+
+        val callback = PromiseCallback()
+        runtime.getExecutor(js)
+            .execute<V8ValuePromise>().use { promise ->
+                promise.register(callback)
+                eventLoop.await()
+            }
+        val result = callback.result
+        callback.clear()
+        return result
+    }
+
     fun showScopeVisualizer(scopeTypeJson: String, visualizationType: String) {
         val js = """
             | (async () => {
