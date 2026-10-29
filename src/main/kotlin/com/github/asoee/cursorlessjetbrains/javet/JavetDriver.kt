@@ -539,6 +539,7 @@ open class JavetDriver {
     }
 
     /** The cheat sheet built from Talon's spoken forms, as JSON (CheatsheetInfo). */
+    @Synchronized
     fun cheatsheetInfo(): JsonElement? {
         val js = """
             | (async () => {
@@ -559,6 +560,7 @@ open class JavetDriver {
     }
 
     /** Talon's "cursorless stats": the engine opens a report of the command history, or warns that there is none */
+    @Synchronized
     fun analyzeCommandHistory() {
         val js = """
             | (async () => {
@@ -577,6 +579,56 @@ open class JavetDriver {
         callback.clear()
     }
 
+    /**
+     * Runs one of the plugin's tutorial methods (tutorialStart, tutorialNext, ..., documentationOpened); [argJson] is
+     * the JSON of its argument, if it takes one
+     */
+    // Synchronized like the other entry points: otherwise another thread already in the engine (e.g. an editor
+    // update) can run this call's async work, and its EDT callbacks deadlock against a caller on the EDT
+    @Synchronized
+    fun tutorialCommand(method: String, argJson: String? = null) {
+        require(method in TUTORIAL_METHODS) { "Unknown tutorial method $method" }
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   await plugin.$method(${argJson ?: ""});
+            |   return "{}";
+            | })();
+            | """.trimMargin()
+
+        val callback = PromiseCallback()
+        runtime.getExecutor(js)
+            .execute<V8ValuePromise>().use { promise ->
+                promise.register(callback)
+                eventLoop.await()
+            }
+        val error = if (callback.success) null else callback.error ?: "Cursorless tutorial $method failed"
+        callback.clear()
+        error?.let { throw IllegalStateException(it) }
+    }
+
+    /** The tutorial's current state as JSON, for the Cursorless tool window */
+    @Synchronized
+    fun tutorialState(): String? {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   return JSON.stringify(plugin.tutorialState());
+            | })();
+            | """.trimMargin()
+
+        val callback = PromiseCallback()
+        runtime.getExecutor(js)
+            .execute<V8ValuePromise>().use { promise ->
+                promise.register(callback)
+                eventLoop.await()
+            }
+        val result = callback.result
+        callback.clear()
+        return result?.toString()
+    }
+
+    @Synchronized
     fun updateConfiguration(configuration: CursorlessConfiguration) {
         val js = """
             | globalThis.configuration?.updateConfiguration(${Json.encodeToString(configuration)});
@@ -744,6 +796,7 @@ class PromiseCallback : IV8ValuePromise.IListener {
         success = false
         if (v8Value is V8ValueError) {
             val v8ValueError = v8Value as V8ValueError
+            error = v8ValueError.toString()
             logger.warn("error in execute - $v8ValueError")
         }
     }
@@ -771,6 +824,7 @@ class PromiseCallback : IV8ValuePromise.IListener {
         success = false
         if (v8Value is V8ValueError) {
             val v8ValueError = v8Value as V8ValueError
+            error = v8ValueError.toString()
             logger.warn("error in execute - $v8ValueError")
             error = v8ValueError.message
         } else if (v8Value is V8ValueString) {
@@ -785,3 +839,13 @@ class PromiseCallback : IV8ValuePromise.IListener {
         error = null
     }
 }
+
+private val TUTORIAL_METHODS = setOf(
+    "tutorialStart",
+    "tutorialNext",
+    "tutorialPrevious",
+    "tutorialRestart",
+    "tutorialResume",
+    "tutorialList",
+    "documentationOpened",
+)

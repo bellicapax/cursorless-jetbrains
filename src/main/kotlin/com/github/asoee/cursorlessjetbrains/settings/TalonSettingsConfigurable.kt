@@ -86,6 +86,13 @@ internal class TalonSettingsConfigurable : BoundConfigurable(DISPLAY_NAME, ID) {
                         .comment("Saves each command (without its spoken form or text) to ~/.cursorless/commandHistory, as VS Code's cursorless.commandHistory does, for \"cursorless stats\"")
                 }
             }
+            group("Troubleshooting") {
+                row {
+                    checkBox("Debug logging")
+                        .bindSelected(settings.state::debugLogging)
+                        .comment("Writes the engine's debug messages to idea.log, such as why a tutorial step says you've stepped off the path, as VS Code's cursorless.debug does")
+                }
+            }
             group("Colors") {
                 row {
                     label("Color settings")

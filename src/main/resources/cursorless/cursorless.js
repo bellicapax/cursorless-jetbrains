@@ -12962,8 +12962,44 @@ var storedTargetKeys = [
 ];
 
 // ../lib-common/src/util/splitKey.ts
+function splitKey(key) {
+  const [hatStyle, character] = key.split(".");
+  return {
+    hatStyle,
+    // If the character is `.` then it will appear as a zero length string
+    // due to the way the split on `.` works
+    character: character.length === 0 ? "." : character
+  };
+}
 function getKey(hatStyle, character) {
   return `${hatStyle}.${character}`;
+}
+
+// ../lib-common/src/testUtil/fromPlainObject.ts
+function plainObjectToPosition({
+  line,
+  character
+}) {
+  return new Position(line, character);
+}
+function plainObjectToRange({ start: start2, end }) {
+  return new Range(plainObjectToPosition(start2), plainObjectToPosition(end));
+}
+function plainObjectToGeneralizedRange(range3) {
+  return range3.type === "line" ? range3 : {
+    type: "character",
+    start: plainObjectToPosition(range3.start),
+    end: plainObjectToPosition(range3.end)
+  };
+}
+function plainObjectToSelection({
+  anchor: anchor2,
+  active
+}) {
+  return new Selection(
+    plainObjectToPosition(anchor2),
+    plainObjectToPosition(active)
+  );
 }
 
 // ../lib-common/src/types/GeneralizedRange.ts
@@ -14063,6 +14099,99 @@ var COLLECTION_STYLE_FLOW = COLLECTION_STYLE.FLOW;
 var CHOMPING_CLIP = CHOMPING_MODE.CLIP;
 var CHOMPING_STRIP = CHOMPING_MODE.STRIP;
 var CHOMPING_KEEP = CHOMPING_MODE.KEEP;
+
+// ../lib-common/src/tutorials/tutorialBasicCoding.ts
+var tutorialBasicCoding = {
+  id: "basic-coding",
+  title: "Basic coding",
+  description: "This tutorial will teach you the basics of coding with Cursorless.",
+  steps: [
+    "When editing code, we often think in terms of statements, functions, etc. Let's clone a statement: {command:cloneStateInk.yml}",
+    [
+      "Cursorless tries its best to keep your commands short.",
+      "In the following command, we just say {scopeType:string} once, but Cursorless infers that both targets are strings: {command:swapStringAirWithWhale.yml}"
+    ],
+    "Great. Let's learn a new action. The {action:pour} action lets you start editing a new line below any line on your screen: {command:pourUrge.yml}",
+    "Now let's try applying a Cursorless action to the current line: {command:dedentThis.yml}",
+    "Code reuse is a fact of life as a programmer. Cursorless makes this easy with the {action:bring} command: {command:bringStateUrge.yml}",
+    "{action:bring} also works with two targets just like {action:swap}: {command:bringBlueCapToValueRisk.yml}",
+    [
+      "Cursorless tries its best to use its knowledge of programming languages to leave you with syntactically valid code.",
+      "Note how it cleans up the comma here: {command:chuckArgueBlueVest.yml}"
+    ],
+    [
+      "We introduced a lot of different scopes today. If you're anything like us, you've already forgotten them all.",
+      "The important thing to remember is that you can always say {special:help} to see a list."
+    ],
+    {
+      interactive: "As always, feel free to stick around and play with this file to practice what you've just learned. Happy coding \u{1F60A}. Say {special:next} to get back home.",
+      documentation: "That wraps up the Basic coding tutorial. Happy coding \u{1F60A}."
+    }
+  ]
+};
+
+// ../lib-common/src/tutorials/tutorialIntroduction.ts
+var wrapsUp = "And that wraps up unit 1 of the Cursorless tutorial! Next time, we'll write some code \u{1F64C}.";
+var tutorialIntroduction = {
+  id: "introduction",
+  title: "Introduction",
+  description: "This tutorial will teach you the basics of Cursorless.",
+  steps: [
+    "Say {command:takeCap.yml}",
+    [
+      "Well done! \u{1F64C} You just used the code word for 'c', {grapheme:c}, to refer to the word with a gray hat over the 'c'.",
+      "When a hat is not gray, we say its color: say {command:takeBlueSun.yml}"
+    ],
+    "Selecting a single token is great, but often we need something bigger.\nSay {command:takeHarpPastDrum.yml} to select a range.",
+    "Despite its name, one of the most powerful aspects of Cursorless is the ability to use more than one cursor.\nLet's try that: {command:takeNearAndSun.yml}",
+    "But let's show that Cursorless can live up to its name: we can say {command:chuckTrap.yml} to delete a word without ever moving our cursor.",
+    "Tokens are great, but they're just one way to think of a document.\nLet's try working with lines: {command:chuckLineOdd.yml}",
+    "We can also use {scopeType:line} to refer to the line containing our cursor: {command:takeLine.yml}",
+    "You now know how to select and delete; let's give you a couple more actions to play with: say {action:pre} to place the cursor before a target, as in {command:preUrge.yml}",
+    "Say {action:post} to place the cursor after a target: {command:postAir.yml}",
+    "Say {action:change} to delete a word and move your cursor to where it used to be: {command:changeSit.yml}",
+    {
+      interactive: [
+        wrapsUp,
+        "Feel free to keep playing with this document, then say {special:next} to continue."
+      ],
+      documentation: wrapsUp
+    }
+  ]
+};
+
+// ../lib-common/src/tutorials/tutorialVisualization.ts
+var tutorialVisualization = {
+  id: "visualization",
+  title: "Visualization",
+  description: "This tutorial will teach you how to visualize different scopes in Cursorless.",
+  excludeIn: ["documentation"],
+  steps: [
+    "The {action:flash} action briefly flashes a target without changing the document: {command:flashState.yml}",
+    "The {action:highlight} action keeps a target highlighted so that you can refer back to it visually. Try it now: {command:highlightState.yml}",
+    "Unlike {action:flash}, {action:highlight} remains visible until you replace or clear it. Clear the highlight now: {command:highlightNothing.yml}",
+    "The scope visualizer shows every instance of a scope in the active editor. Visualize all statements by saying {visualize:state}.",
+    "Say {special:visualizeNothing} to hide the scope visualizer. {scopeType:state} is one of many scopes supported by Cursorless. To see all available scopes, have a look at the Scopes section below.",
+    "That wraps up the visualization tutorial. Feel free to experiment, then say {special:next} to return to the tutorial list."
+  ]
+};
+
+// ../lib-common/src/tutorials/tutorials.ts
+var tutorials = [
+  tutorialIntroduction,
+  tutorialBasicCoding,
+  tutorialVisualization
+];
+function getTutorialsForContext(context) {
+  return tutorials.map((tutorial, index) => ({
+    ...tutorial,
+    position: index + 1,
+    steps: tutorial.steps.map((step) => {
+      const content = typeof step === "string" || Array.isArray(step) ? step : step[context];
+      return Array.isArray(content) ? content.join("\n") : content;
+    })
+  })).filter((tutorial) => tutorial.excludeIn?.includes(context) !== true);
+}
 
 // ../lib-common/src/types/command/command.types.ts
 var LATEST_VERSION = 7;
@@ -15197,6 +15326,32 @@ function isEmptyIterable(iterable) {
 // ../lib-common/src/util/object.ts
 function unsafeKeys(o2) {
   return Object.keys(o2);
+}
+
+// ../lib-common/src/util/serializedMarksToTokenHats.ts
+function serializedMarksToTokenHats(marks, editor) {
+  if (marks == null) {
+    return [];
+  }
+  return Object.entries(marks).map(([key, token]) => {
+    const { hatStyle, character } = splitKey(key);
+    const range3 = plainObjectToRange(token);
+    return {
+      hatStyle,
+      grapheme: character,
+      token: {
+        editor,
+        range: range3,
+        offsets: {
+          start: editor.document.offsetAt(range3.start),
+          end: editor.document.offsetAt(range3.end)
+        },
+        text: editor.document.getText(range3)
+      },
+      // NB: We don't care about the hat range for this test
+      hatRange: range3
+    };
+  });
 }
 
 // ../lib-common/src/util/uniqWithHash.ts
@@ -16634,8 +16789,23 @@ var grammar = {
 var grammar_default = grammar;
 
 // ../lib-engine/src/customCommandGrammar/parseCommand.ts
+function getScopeTypeParser() {
+  return new import_nearley.default.Parser(
+    import_nearley.default.Grammar.fromCompiled({ ...grammar_default, ParserStart: "scopeType" })
+  );
+}
 function getActionParser() {
   return new import_nearley.default.Parser(import_nearley.default.Grammar.fromCompiled(grammar_default));
+}
+function parseScopeType(input2) {
+  const parser = getScopeTypeParser();
+  parser.feed(input2);
+  if (parser.results.length !== 1) {
+    throw new Error(
+      `Expected exactly one result, got ${parser.results.length}`
+    );
+  }
+  return parser.results[0];
 }
 function parseAction(input2) {
   const parser = getActionParser();
@@ -16707,6 +16877,32 @@ function getPartialPrimitiveTargetsHelper(target) {
       );
     case "implicit":
       return [];
+  }
+}
+function transformPartialPrimitiveTargets(targets, func2) {
+  return targets.map(
+    (target) => transformPartialPrimitiveTargetsHelper(target, func2)
+  );
+}
+function transformPartialPrimitiveTargetsHelper(target, func2) {
+  switch (target.type) {
+    case "primitive":
+      return func2(target);
+    case "implicit":
+      return target;
+    case "list":
+      return {
+        ...target,
+        elements: target.elements.map(
+          (element) => transformPartialPrimitiveTargetsHelper(element, func2)
+        )
+      };
+    case "range":
+      return {
+        ...target,
+        anchor: transformPartialPrimitiveTargetsHelper(target.anchor, func2),
+        active: func2(target.active)
+      };
   }
 }
 
@@ -52540,7 +52736,38 @@ var JetbrainsPlugin = class {
     /** Set by activate, once the engine's scope provider exists */
     __publicField(this, "scopeVisualizer");
     __publicField(this, "commandHistoryStorage");
+    /** Set by activate, once the engine exists */
+    __publicField(this, "tutorial");
     this.commandHistoryStorage = new JetbrainsCommandHistoryStorage(client);
+  }
+  /**
+   * Talon's tutorial commands (cursorless.tutorial.*). The Cursorless tool window shows the state; start takes a
+   * tutorial id or, from "tutorial <number>", its zero-based position.
+   */
+  async tutorialStart(id2) {
+    await this.tutorial?.start(id2);
+  }
+  async tutorialNext() {
+    await this.tutorial?.next();
+  }
+  async tutorialPrevious() {
+    await this.tutorial?.previous();
+  }
+  async tutorialRestart() {
+    await this.tutorial?.restart();
+  }
+  async tutorialResume() {
+    await this.tutorial?.resume();
+  }
+  async tutorialList() {
+    await this.tutorial?.list();
+  }
+  /** "cursorless docs" opened the documentation, which a tutorial step may be waiting for */
+  documentationOpened() {
+    this.tutorial?.documentationOpened();
+  }
+  tutorialState() {
+    return this.tutorial?.state ?? { type: "loading" };
   }
   /** Talon's "cursorless stats": opens a report of the command history, as the VS Code extension does */
   async analyzeCommandHistory() {
@@ -52616,25 +52843,6 @@ var JetbrainsCapabilities = class {
   }
 };
 
-// src/ide/JetbrainsEvents.ts
-function fromJetbrainsContentChange(document, firstLine, lastLine, linedata) {
-  const result = [];
-  const text = linedata.join("\n");
-  const range3 = new Range(
-    new Position(firstLine, 0),
-    new Position(lastLine - 1, document.lineAt(lastLine - 1).text.length)
-  );
-  const rangeOffset = document.offsetAt(range3.start);
-  const rangeLength = document.offsetAt(range3.end) - rangeOffset;
-  result.push({
-    range: range3,
-    rangeOffset,
-    rangeLength,
-    text
-  });
-  return result;
-}
-
 // src/ide/JetbrainsClipboard.ts
 var JetbrainsClipboard = class {
   constructor(client) {
@@ -52703,11 +52911,12 @@ function jetbrainsPerformEdits(client, ide, document, id2, edits) {
       text: change.text
     }))
   };
-  client.documentUpdated(id2, JSON.stringify(editorEdit));
+  const selectionsJson = client.documentUpdated(id2, JSON.stringify(editorEdit));
   ide.emitDidChangeTextDocument({
     document,
     contentChanges: changes
   });
+  return selectionsJson;
 }
 
 // src/ide/JetbrainsEditorCommand.ts
@@ -52745,25 +52954,40 @@ var JetbrainsEditor = class {
     if (!selectionsEqual(this.selections, selections)) {
       await setSelections(this.client, this.document, this.id, selections);
       this.selections = selections;
+      this.ide.selectionsChanged(this);
     }
   }
   edit(edits) {
     if (!this.isWritable) {
       return Promise.resolve(false);
     }
-    jetbrainsPerformEdits(this.client, this.ide, this.document, this.id, edits);
+    const selectionsJson = jetbrainsPerformEdits(
+      this.client,
+      this.ide,
+      this.document,
+      this.id,
+      edits
+    );
+    if (selectionsJson) {
+      this.updateSelections(JSON.parse(selectionsJson));
+    }
     return Promise.resolve(true);
   }
-  async clipboardCopy(ranges) {
-    await this.ide.clipboard.copy(this.id, ranges);
-  }
-  async clipboardPaste() {
-    const changesJson = this.client.clipboardPaste(this.id);
-    if (!changesJson) {
+  /**
+   * Applies what an IDE action did (JSON {changes, selections} from the client) to our copy of the editor, as VS Code
+   * has it before its command resolves. The IDE's own report of the editor comes later, so without this the engine
+   * would act on the text before the action, e.g. a tutorial step that edits the document right after "pour"
+   */
+  applyIdeEdits(resultJson) {
+    if (!resultJson) {
       return;
     }
-    const pasteChanges = JSON.parse(changesJson);
-    for (const { rangeOffset, rangeLength, text } of pasteChanges) {
+    const { changes, selections } = JSON.parse(resultJson);
+    this.applyChanges(changes);
+    this.updateSelections(selections);
+  }
+  applyChanges(changes) {
+    for (const { rangeOffset, rangeLength, text } of changes) {
       const range3 = new Range(
         this.document.positionAt(rangeOffset),
         this.document.positionAt(rangeOffset + rangeLength)
@@ -52775,6 +52999,24 @@ var JetbrainsEditor = class {
       });
     }
   }
+  updateSelections(jbSelections) {
+    const selections = jbSelections.map(
+      (selection) => createSelection(this.document, selection)
+    );
+    if (!selectionsEqual(this.selections, selections)) {
+      this.selections = selections;
+      this.ide.selectionsChanged(this);
+    }
+  }
+  async clipboardCopy(ranges) {
+    await this.ide.clipboard.copy(this.id, ranges);
+  }
+  async clipboardPaste() {
+    const changesJson = this.client.clipboardPaste(this.id);
+    if (changesJson) {
+      this.applyChanges(JSON.parse(changesJson));
+    }
+  }
   async indentLine(ranges) {
     const command = new JetbrainsEditorCommand(
       ranges ? ranges : [],
@@ -52782,7 +53024,9 @@ var JetbrainsEditor = class {
       true,
       "EditorIndentSelection"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async outdentLine(ranges) {
     const command = new JetbrainsEditorCommand(
@@ -52791,13 +53035,18 @@ var JetbrainsEditor = class {
       true,
       "EditorUnindentSelection"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async insertLineAfter(ranges) {
-    await this.client.insertLineAfter(this.id, JSON.stringify(ranges));
+    this.applyIdeEdits(
+      this.client.insertLineAfter(this.id, JSON.stringify(ranges))
+    );
   }
   async focus() {
     await this.client.focusEditor(this.id);
+    this.ide.setActiveEditor(this, true);
   }
   revealRange(_range) {
     return Promise.resolve();
@@ -52812,7 +53061,9 @@ var JetbrainsEditor = class {
       false,
       "GotoDeclaration"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async fold(ranges) {
     const command = new JetbrainsEditorCommand(
@@ -52821,7 +53072,9 @@ var JetbrainsEditor = class {
       false,
       "CollapseRegion"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async unfold(ranges) {
     const command = new JetbrainsEditorCommand(
@@ -52830,7 +53083,9 @@ var JetbrainsEditor = class {
       false,
       "ExpandRegion"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async toggleBreakpoint(ranges) {
     for (const range3 of ranges ?? []) {
@@ -52841,7 +53096,9 @@ var JetbrainsEditor = class {
         false,
         "ToggleLineBreakpoint"
       );
-      await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+      this.applyIdeEdits(
+        this.client.executeRangeCommand(this.id, JSON.stringify(command))
+      );
     }
   }
   async toggleLineComment(ranges) {
@@ -52851,7 +53108,9 @@ var JetbrainsEditor = class {
       false,
       "CommentByLineComment"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async insertSnippet(snippet, ranges) {
     console.log("insertSnippet" + snippet);
@@ -52867,7 +53126,9 @@ var JetbrainsEditor = class {
       false,
       "RenameElement"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async showReferences(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52876,7 +53137,9 @@ var JetbrainsEditor = class {
       false,
       "FindUsages"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async quickFix(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52885,7 +53148,9 @@ var JetbrainsEditor = class {
       false,
       "ShowIntentionActions"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async revealDefinition(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52894,7 +53159,9 @@ var JetbrainsEditor = class {
       false,
       "GotoDeclaration"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async revealTypeDefinition(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52903,7 +53170,9 @@ var JetbrainsEditor = class {
       false,
       "QuickImplementations"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async showHover(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52912,7 +53181,9 @@ var JetbrainsEditor = class {
       false,
       "QuickJavaDoc"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async showDebugHover(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52921,7 +53192,9 @@ var JetbrainsEditor = class {
       false,
       "QuickEvaluateExpression"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   async extractVariable(range3) {
     const command = new JetbrainsEditorCommand(
@@ -52930,7 +53203,9 @@ var JetbrainsEditor = class {
       false,
       "IntroduceVariable"
     );
-    await this.client.executeRangeCommand(this.id, JSON.stringify(command));
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
   editNewNotebookCellAbove() {
     throw new Error("editNewNotebookCellAbove not implemented.");
@@ -52965,7 +53240,12 @@ function createTextEditor(client, ide, editorState) {
   const languageId = editorState.languageId ?? "plaintext";
   const document = new InMemoryTextDocument(uri, languageId, editorState.text);
   const visibleRanges = [
-    new Range(editorState.firstVisibleLine, 0, editorState.lastVisibleLine, 0)
+    new Range(
+      editorState.firstVisibleLine,
+      0,
+      editorState.lastVisibleLine + 1,
+      0
+    )
   ];
   const selections = editorState.selections.map(
     (selection) => createSelection(document, selection)
@@ -53015,13 +53295,17 @@ var JetbrainsIDE = class {
     __publicField(this, "quickPickReturnValue");
     __publicField(this, "editors", /* @__PURE__ */ new Map());
     __publicField(this, "onDidChangeTextDocumentNotifier", new Notifier());
+    __publicField(this, "onDidChangeActiveTextEditorNotifier", new Notifier());
+    __publicField(this, "onDidChangeTextEditorSelectionNotifier", new Notifier());
+    __publicField(this, "onDidChangeTextEditorVisibleRangesNotifier", new Notifier());
+    __publicField(this, "onDidChangeVisibleTextEditorsNotifier", new Notifier());
     __publicField(this, "onDidOpenTextDocumentNotifier", new Notifier());
     __publicField(this, "onDidChangeTextDocumentContentNotifier", new Notifier());
     __publicField(this, "onDidCloseTextDocument", dummyEvent);
-    __publicField(this, "onDidChangeActiveTextEditor", dummyEvent);
-    __publicField(this, "onDidChangeVisibleTextEditors", dummyEvent);
-    __publicField(this, "onDidChangeTextEditorSelection", dummyEvent);
-    __publicField(this, "onDidChangeTextEditorVisibleRanges", dummyEvent);
+    __publicField(this, "onDidChangeActiveTextEditor", (listener) => this.onDidChangeActiveTextEditorNotifier.registerListener(listener));
+    __publicField(this, "onDidChangeVisibleTextEditors", (listener) => this.onDidChangeVisibleTextEditorsNotifier.registerListener(listener));
+    __publicField(this, "onDidChangeTextEditorSelection", (listener) => this.onDidChangeTextEditorSelectionNotifier.registerListener(listener));
+    __publicField(this, "onDidChangeTextEditorVisibleRanges", (listener) => this.onDidChangeTextEditorVisibleRangesNotifier.registerListener(listener));
     this.configuration = configuration;
     this.keyValueStore = new JetbrainsKeyValueStore(this.client);
     this.messages = new JetbrainsMessages(this.client);
@@ -53100,23 +53384,32 @@ var JetbrainsIDE = class {
     throw Error("openTextDocument Not implemented");
   }
   async openUntitledTextDocument(options2 = {}) {
-    const editorState = JSON.parse(
+    const opened = JSON.parse(
       this.client.openUntitledTextDocument(
         options2.content ?? "",
         options2.language ?? null
       )
     );
-    return this.updateTextEditors(editorState);
+    for (const id2 of opened.hiddenEditorIds) {
+      const hidden = this.editors.get(id2);
+      if (hidden != null) {
+        hidden.isVisible = false;
+        hidden.isActive = false;
+      }
+    }
+    return this.updateTextEditors(opened.editor);
   }
   async showInputBox(options2) {
     return this.client.showInputBox(JSON.stringify(options2 ?? {})) ?? void 0;
   }
   async executeCommand(command, ...args2) {
-    const editorId = this.activeEditor?.id;
-    if (editorId == null) {
+    const editor = this.activeEditor;
+    if (editor == null) {
       throw Error(`executeCommand ${command}: no active editor`);
     }
-    this.client.executeCommand(editorId, command, JSON.stringify(args2));
+    editor.applyIdeEdits(
+      this.client.executeCommand(editor.id, command, JSON.stringify(args2))
+    );
     return void 0;
   }
   onDidChangeTextDocument(listener) {
@@ -53124,6 +53417,24 @@ var JetbrainsIDE = class {
   }
   onDidOpenTextDocument(listener, _thisArgs, _disposables) {
     return this.onDidOpenTextDocumentNotifier.registerListener(listener);
+  }
+  /** Announces new selections, as VS Code does whether the user or Cursorless set them */
+  selectionsChanged(editor) {
+    this.onDidChangeTextEditorSelectionNotifier.notifyListeners({
+      textEditor: editor,
+      selections: editor.selections
+    });
+  }
+  /**
+   * Focusing an editor makes it the active one straight away, as in VS Code, rather than when the IDE next reports.
+   * [announceUnchanged] announces it even if it already was: a tutorial step ends its setup by focusing its editor,
+   * and the IDE calls along the way can outlast the tutorial's 100 ms recheck, which then sees a half-set-up step
+   */
+  setActiveEditor(editor, announceUnchanged = false) {
+    if (this.activeEditor !== editor || announceUnchanged) {
+      this.activeEditor = editor;
+      this.onDidChangeActiveTextEditorNotifier.notifyListeners(editor);
+    }
   }
   handleCommandError(_err) {
   }
@@ -53144,37 +53455,49 @@ var JetbrainsIDE = class {
   }
   documentChanged(editorStateJson) {
     const editorState = editorStateJson;
+    const oldDocument = this.editors.get(editorState.id)?.document;
     const editor = this.updateTextEditors(editorState);
-    const linedata = getLines(
-      editorState.text,
-      editorState.firstVisibleLine,
-      editorState.lastVisibleLine
-    );
-    const contentChangeEvents = fromJetbrainsContentChange(
-      editor.document,
-      editorState.firstVisibleLine,
-      editorState.lastVisibleLine,
-      linedata
-    );
-    const documentChangeEvent = {
-      document: editor.document,
-      contentChanges: contentChangeEvents
-    };
-    this.emitDidChangeTextDocument(documentChangeEvent);
+    const change = oldDocument == null ? void 0 : textChange(oldDocument, editorState.text);
+    if (change != null) {
+      this.emitDidChangeTextDocument({
+        document: editor.document,
+        contentChanges: [change]
+      });
+    }
   }
   emitDidChangeTextDocument(event) {
     this.onDidChangeTextDocumentNotifier.notifyListeners(event);
   }
   updateTextEditors(editorState) {
     let editor = this.editors.get(editorState.id);
+    let visibilityChanged;
     if (editor) {
+      const oldSelections = editor.selections;
+      const oldVisibleRanges = editor.visibleRanges;
+      const wasVisible = editor.isVisible;
       updateEditor(editor, editorState);
+      visibilityChanged = wasVisible !== editor.isVisible;
+      if (!selectionsEqual(oldSelections, editor.selections)) {
+        this.selectionsChanged(editor);
+      }
+      if (!rangesEqual(oldVisibleRanges, editor.visibleRanges)) {
+        this.onDidChangeTextEditorVisibleRangesNotifier.notifyListeners({
+          textEditor: editor,
+          visibleRanges: editor.visibleRanges
+        });
+      }
     } else {
       editor = createTextEditor(this.client, this, editorState);
       this.editors.set(editorState.id, editor);
+      visibilityChanged = editor.isVisible;
+    }
+    if (visibilityChanged) {
+      this.onDidChangeVisibleTextEditorsNotifier.notifyListeners(
+        this.visibleTextEditors
+      );
     }
     if (editorState.active) {
-      this.activeEditor = editor;
+      this.setActiveEditor(editor);
     }
     return editor;
   }
@@ -53205,9 +53528,33 @@ function updateEditor(editor, editorState) {
   editor.isEditable = editorState.editable;
   editor.isWritable = editorState.writable;
 }
-function getLines(text, firstLine, lastLine) {
-  const lines = text.split("\n");
-  return lines.slice(firstLine, lastLine);
+function textChange(oldDocument, newText) {
+  const oldText = oldDocument.getText();
+  if (oldText === newText) {
+    return void 0;
+  }
+  const maxLength = Math.min(oldText.length, newText.length);
+  let prefix = 0;
+  while (prefix < maxLength && oldText[prefix] === newText[prefix]) {
+    prefix++;
+  }
+  let suffix = 0;
+  while (suffix < maxLength - prefix && oldText[oldText.length - 1 - suffix] === newText[newText.length - 1 - suffix]) {
+    suffix++;
+  }
+  const rangeLength = oldText.length - prefix - suffix;
+  return {
+    range: new Range(
+      oldDocument.positionAt(prefix),
+      oldDocument.positionAt(prefix + rangeLength)
+    ),
+    rangeOffset: prefix,
+    rangeLength,
+    text: newText.slice(prefix, newText.length - suffix)
+  };
+}
+function rangesEqual(a2, b2) {
+  return a2.length === b2.length && a2.every((range3, i3) => range3.isRangeEqual(b2[i3]));
 }
 function dummyEvent() {
   return {
@@ -57434,9 +57781,12 @@ var JetbrainsScopeVisualizer = class {
     __publicField(this, "listener");
     __publicField(this, "highlightIds", []);
     __publicField(this, "renderedEditorIds", /* @__PURE__ */ new Set());
+    /** Called with the scope type shown, or undefined when hidden, so the tutorial can wait for "visualize" */
+    __publicField(this, "onDidChangeScopeType");
   }
   start(scopeType, visualizationType) {
     this.stop();
+    this.onDidChangeScopeType?.(scopeType);
     const nestedId = `scopeVisualizer.${visualizationType}`;
     this.highlightIds = [
       "scopeVisualizer.domain",
@@ -57468,6 +57818,9 @@ var JetbrainsScopeVisualizer = class {
     );
   }
   stop() {
+    if (this.listener != null) {
+      this.onDidChangeScopeType?.(void 0);
+    }
     this.listener?.dispose();
     this.listener = void 0;
     for (const editorId of this.renderedEditorIds) {
@@ -57499,6 +57852,842 @@ var JetbrainsScopeVisualizer = class {
       editor.id,
       JSON.stringify(domainEqualsNestedRanges)
     );
+  }
+};
+
+// ../lib-tutorial/src/arePreconditionsMet.ts
+async function arePreconditionsMet(activeTextEditor, editor, hatTokenMap, { initialState: snapshot, languageId }) {
+  if (snapshot == null) {
+    return void 0;
+  }
+  if (activeTextEditor !== editor) {
+    return `Active editor differs from tutorial editor`;
+  }
+  if (editor == null) {
+    return "Tutorial editor is unavailable";
+  }
+  if (editor.document.languageId !== languageId) {
+    return `Language differs (expected: ${languageId}, actual: ${editor.document.languageId})`;
+  }
+  if (editor.document.getText() !== snapshot.documentContents) {
+    return "Document contents differ";
+  }
+  const expectedSelections = snapshot.selections.map(plainObjectToSelection);
+  if (!isEqual_default(editor.selections, expectedSelections)) {
+    const expected = expectedSelections.map((selection) => selection.concise()).join(", ");
+    const actual = editor.selections.map((selection) => selection.concise()).join(", ");
+    return `Selections differ (expected: ${expected}, actual: ${actual})`;
+  }
+  const readableHatMap = await hatTokenMap.getReadableMap(false);
+  for (const mark of serializedMarksToTokenHats(snapshot.marks, editor)) {
+    const actualRange = readableHatMap.getToken(
+      mark.hatStyle,
+      mark.grapheme
+    )?.range;
+    if (!actualRange?.isRangeEqual(mark.hatRange)) {
+      return `Hat ${mark.hatStyle}.${mark.grapheme} differs (expected: ${mark.hatRange.concise()}, actual: ${actualRange?.concise() ?? "none"})`;
+    }
+  }
+  return void 0;
+}
+
+// ../lib-tutorial/src/TutorialError.ts
+var TutorialError = class extends Error {
+  constructor(message, { requiresTalonUpdate }) {
+    super(message);
+    __publicField(this, "requiresTalonUpdate");
+    this.name = "TutorialError";
+    this.requiresTalonUpdate = requiresTalonUpdate;
+  }
+};
+
+// ../lib-tutorial/src/getSpokenFormStrict.ts
+function getSpokenFormStrict2(spokenForm) {
+  if (spokenForm.type === "error") {
+    throw new TutorialError(
+      `Error while processing spoken form for scope type: ${spokenForm.reason}`,
+      { requiresTalonUpdate: spokenForm.requiresTalonUpdate }
+    );
+  }
+  return spokenForm.spokenForms[0];
+}
+
+// ../lib-tutorial/src/getScopeTypeSpokenFormStrict.ts
+function getScopeTypeSpokenFormStrict(customSpokenFormGenerator, scopeType) {
+  return getSpokenFormStrict2(
+    customSpokenFormGenerator.scopeTypeToSpokenForm(scopeType)
+  );
+}
+
+// ../lib-tutorial/src/stepComponentParsers/ActionComponentParser.ts
+var ActionComponentParser = class {
+  constructor(customSpokenFormGenerator) {
+    __publicField(this, "customSpokenFormGenerator", customSpokenFormGenerator);
+    __publicField(this, "actionMap", {});
+    for (const actionName of actionNames) {
+      const { spokenForms } = defaultSpokenFormMap.action[actionName];
+      for (const spokenForm of spokenForms) {
+        this.actionMap[spokenForm] = actionName;
+      }
+    }
+  }
+  parse(arg) {
+    return Promise.resolve({
+      content: {
+        type: "term",
+        value: this.getActionSpokenForm(this.parseActionName(arg))
+      }
+    });
+  }
+  getActionSpokenForm(actionId) {
+    return getSpokenFormStrict2(
+      this.customSpokenFormGenerator.actionIdToSpokenForm(actionId)
+    );
+  }
+  parseActionName(arg) {
+    const actionId = this.actionMap[arg];
+    if (actionId == null) {
+      throw new Error(`Unknown action: ${arg}`);
+    }
+    return actionId;
+  }
+};
+
+// ../lib-tutorial/src/stepComponentParsers/CursorlessCommandComponentParser.ts
+var CursorlessCommandComponentParser = class {
+  constructor(contentProvider, tutorialId, customSpokenFormGenerator, hats) {
+    __publicField(this, "contentProvider", contentProvider);
+    __publicField(this, "tutorialId", tutorialId);
+    __publicField(this, "customSpokenFormGenerator", customSpokenFormGenerator);
+    __publicField(this, "hats", hats);
+  }
+  async parse(arg) {
+    const fixture = await this.contentProvider.loadFixture(
+      this.tutorialId,
+      arg
+    );
+    const { command, initialState } = substituteMissingHats(
+      this.hats.enabledHatStyles,
+      canonicalizeAndValidateCommand(fixture.command),
+      fixture.initialState
+    );
+    return {
+      initialState,
+      languageId: fixture.languageId,
+      trigger: {
+        type: "command",
+        command
+      },
+      content: {
+        type: "command",
+        value: this.getCommandSpokenForm(command)
+      }
+    };
+  }
+  getCommandSpokenForm(command) {
+    const spokenForm = this.customSpokenFormGenerator.commandToSpokenForm(command);
+    if (spokenForm.type === "error") {
+      throw new TutorialError(
+        `Error while processing spoken form for command: ${spokenForm.reason}`,
+        { requiresTalonUpdate: spokenForm.requiresTalonUpdate }
+      );
+    }
+    return spokenForm.spokenForms[0];
+  }
+};
+function substituteMissingHats(enabledHatStyles, command, initialState) {
+  const updatedCommand = structuredClone(command);
+  transformPartialPrimitiveTargets(
+    getPartialTargetDescriptors(updatedCommand.action),
+    (target) => {
+      if (target.mark?.type !== "decoratedSymbol") {
+        return target;
+      }
+      const color = target.mark.symbolColor;
+      if (enabledHatStyles[color] == null) {
+        target.mark.symbolColor = Object.keys(enabledHatStyles)[0];
+      }
+      return target;
+    }
+  );
+  const updatedInitialState = initialState.marks != null ? {
+    ...initialState,
+    marks: Object.fromEntries(
+      Object.entries(initialState.marks).map(([key, value]) => {
+        const { hatStyle, character } = splitKey(key);
+        const newKey = enabledHatStyles[hatStyle] == null ? getKey(Object.keys(enabledHatStyles)[0], character) : key;
+        return [newKey, value];
+      })
+    )
+  } : initialState;
+  return {
+    command: updatedCommand,
+    initialState: updatedInitialState
+  };
+}
+
+// ../lib-tutorial/src/stepComponentParsers/GraphemeComponentParser.ts
+var GraphemeComponentParser = class {
+  constructor(customSpokenFormGenerator) {
+    __publicField(this, "customSpokenFormGenerator", customSpokenFormGenerator);
+  }
+  parse(arg) {
+    return Promise.resolve({
+      content: {
+        type: "term",
+        value: this.getGraphemeSpokenForm(arg)
+      }
+    });
+  }
+  getGraphemeSpokenForm(grapheme) {
+    return getSpokenFormStrict2(
+      this.customSpokenFormGenerator.graphemeToSpokenForm(grapheme)
+    );
+  }
+};
+
+// ../lib-tutorial/src/stepComponentParsers/parseSpecialComponent.ts
+var SPECIAL_COMMANDS = {
+  help: "cursorless help",
+  next: "tutorial next"
+};
+function parseSpecialComponent(customSpokenFormGenerator, arg) {
+  let trigger = void 0;
+  let value;
+  switch (arg) {
+    case "help":
+      trigger = {
+        type: "help"
+      };
+      value = SPECIAL_COMMANDS.help;
+      break;
+    case "next":
+      value = SPECIAL_COMMANDS.next;
+      break;
+    case "visualizeNothing":
+      trigger = {
+        type: "visualize",
+        scopeType: void 0
+      };
+      value = getSpokenFormStrict2(
+        customSpokenFormGenerator.scopeVisualizerIdToSpokenForm(
+          "hideScopeVisualizer"
+        )
+      );
+      break;
+    default:
+      throw new Error(`Unknown special command: ${arg}`);
+  }
+  return {
+    content: {
+      type: "command",
+      value
+    },
+    trigger
+  };
+}
+
+// ../lib-tutorial/src/stepComponentParsers/parseVisualizeComponent.ts
+function parseVisualizeComponent(customSpokenFormGenerator, arg) {
+  const scopeType = parseScopeType(arg);
+  const visualizeSpokenForm = getSpokenFormStrict2(
+    customSpokenFormGenerator.scopeVisualizerIdToSpokenForm(
+      "showScopeVisualizer"
+    )
+  );
+  return {
+    content: {
+      type: "command",
+      value: `${visualizeSpokenForm} ${getScopeTypeSpokenFormStrict(customSpokenFormGenerator, scopeType)}`
+    },
+    trigger: {
+      type: "visualize",
+      scopeType
+    }
+  };
+}
+
+// ../lib-tutorial/src/TutorialStepParser.ts
+var componentRegex = /\{(\w+):([^}]+)\}/gu;
+var TutorialStepParser = class {
+  constructor(contentProvider, tutorialId, customSpokenFormGenerator, hats) {
+    /**
+     * A map of component type to a function that parses the component.
+     */
+    __publicField(this, "componentParsers");
+    this.parseTutorialStep = this.parseTutorialStep.bind(this);
+    const cursorlessCommandParser = new CursorlessCommandComponentParser(
+      contentProvider,
+      tutorialId,
+      customSpokenFormGenerator,
+      hats
+    );
+    const actionParser = new ActionComponentParser(customSpokenFormGenerator);
+    const graphemeParser = new GraphemeComponentParser(
+      customSpokenFormGenerator
+    );
+    this.componentParsers = {
+      command: (arg) => cursorlessCommandParser.parse(arg),
+      special: (arg) => Promise.resolve(parseSpecialComponent(customSpokenFormGenerator, arg)),
+      action: (arg) => actionParser.parse(arg),
+      grapheme: (arg) => graphemeParser.parse(arg),
+      scopeType: (arg) => Promise.resolve({
+        content: {
+          type: "term",
+          value: getScopeTypeSpokenFormStrict(
+            customSpokenFormGenerator,
+            parseScopeType(arg)
+          )
+        }
+      }),
+      visualize: (arg) => Promise.resolve(
+        parseVisualizeComponent(customSpokenFormGenerator, arg)
+      )
+    };
+  }
+  /**
+   * Given the raw content of a tutorial step, parses it into a
+   * {@link TutorialStep} object.
+   *
+   * For example, given `Say {command:takeCap.yml}`, this would return:
+   *
+   * ```json
+   * {
+   *   "content": [
+   *     [
+   *       {
+   *         "type": "string",
+   *         "value": "Say "
+   *       },
+   *       {
+   *         "type": "command",
+   *         "value": "take cap"
+   *       }
+   *     ]
+   *   ],
+   *   "initialState": {
+   *     "documentContents": "...",
+   *     "selections": [ ... ],
+   *     "marks": { ... }
+   *   },
+   *   "languageId": "plaintext",
+   *   "trigger": {
+   *     "type": "command",
+   *     "command": { ... }
+   *   }
+   * }
+   * ```
+   *
+   * Note that the `initialState`, `languageId`, and `trigger` fiels are optional,
+   * and in this case come from the `takeCap.yml` fixture.
+   *
+   * @param rawContent The raw content of the tutorial step to parse
+   * @returns A {@link TutorialStep} object representing the parsed step
+   */
+  async parseTutorialStep(rawContent) {
+    const ret = {
+      content: []
+    };
+    for (const line of rawContent.split("\n")) {
+      const lineContent = [];
+      let currentIndex = 0;
+      componentRegex.lastIndex = 0;
+      for (const {
+        0: { length },
+        1: type,
+        2: arg,
+        index
+      } of line.matchAll(componentRegex)) {
+        if (index > currentIndex) {
+          lineContent.push({
+            type: "string",
+            value: line.slice(currentIndex, index)
+          });
+        }
+        currentIndex = index + length;
+        const componentParser = this.componentParsers[type];
+        if (componentParser == null) {
+          throw new Error(`Unknown component type: ${type}`);
+        }
+        const result = await componentParser(arg);
+        const { content, ...rest } = result;
+        lineContent.push(content);
+        updateStrict(ret, rest);
+      }
+      if (currentIndex < line.length) {
+        lineContent.push({
+          type: "string",
+          value: line.slice(currentIndex)
+        });
+      }
+      ret.content.push(lineContent);
+    }
+    return ret;
+  }
+};
+function updateStrict(target, source) {
+  for (const key in source) {
+    if (source[key] == null) {
+      continue;
+    }
+    if (target[key] != null) {
+      throw new Error(`Duplicate key: ${key}`);
+    }
+    target[key] = source[key];
+  }
+}
+
+// ../lib-tutorial/src/loadTutorial.ts
+async function loadTutorial(contentProvider, tutorialId, customSpokenFormGenerator, rawContent, keyValueStore, hats) {
+  const parser = new TutorialStepParser(
+    contentProvider,
+    tutorialId,
+    customSpokenFormGenerator,
+    hats
+  );
+  let tutorialContent;
+  let state;
+  try {
+    tutorialContent = {
+      title: rawContent.title,
+      steps: await Promise.all(
+        rawContent.steps.map(async (step, index) => {
+          try {
+            return await parser.parseTutorialStep(step);
+          } catch (error62) {
+            if (error62 instanceof TutorialError) {
+              throw error62;
+            }
+            throw new Error(
+              `Failed to parse tutorial "${tutorialId}" step ${index + 1}: ${getErrorMessage(error62)}`,
+              { cause: error62 }
+            );
+          }
+        })
+      )
+    };
+    let stepNumber = keyValueStore.get("tutorialProgress")[tutorialId]?.currentStep ?? 0;
+    if (stepNumber >= tutorialContent.steps.length - 1) {
+      stepNumber = 0;
+    }
+    state = {
+      type: "doingTutorial",
+      hasErrors: false,
+      id: tutorialId,
+      stepNumber,
+      stepContent: tutorialContent.steps[stepNumber].content,
+      stepCount: tutorialContent.steps.length,
+      title: tutorialContent.title,
+      preConditionsMet: true
+    };
+  } catch (error62) {
+    tutorialContent = {
+      title: rawContent.title,
+      steps: []
+    };
+    state = {
+      type: "doingTutorial",
+      hasErrors: true,
+      id: tutorialId,
+      stepNumber: 0,
+      title: tutorialContent.title,
+      preConditionsMet: true,
+      errorMessage: getErrorMessage(error62),
+      requiresTalonUpdate: error62 instanceof TutorialError && error62.requiresTalonUpdate
+    };
+  }
+  return { tutorialContent, state };
+}
+
+// ../lib-tutorial/src/setupStep.ts
+async function setupStep(ide, hatTokenMap, editor, state, currentTutorial) {
+  if (state.type !== "doingTutorial" || state.hasErrors) {
+    return { editor: void 0, highlightRanges: [] };
+  }
+  if (currentTutorial == null) {
+    throw new Error("No current tutorial found");
+  }
+  const step = currentTutorial.steps[state.stepNumber];
+  if (step == null) {
+    throw new Error(
+      `No tutorial step found for step number ${state.stepNumber}`
+    );
+  }
+  const { initialState: snapshot, languageId = "plaintext" } = step;
+  if (snapshot == null) {
+    return { editor, highlightRanges: [] };
+  }
+  return await applySnapshot(ide, hatTokenMap, editor, snapshot, languageId);
+}
+async function applySnapshot(ide, hatTokenMap, editorIn, snapshot, languageId) {
+  const retry = editorIn != null;
+  let editor = editorIn;
+  try {
+    if (editor == null) {
+      editor = await ide.openUntitledTextDocument({
+        content: snapshot.documentContents,
+        language: languageId
+      });
+    }
+    const editableEditor = ide.getEditableTextEditor(editor);
+    if (editableEditor.document.languageId !== languageId) {
+      throw new Error(
+        `Expected language id ${languageId}, but got ${editableEditor.document.languageId}`
+      );
+    }
+    await editableEditor.edit([
+      {
+        range: editableEditor.document.range,
+        text: snapshot.documentContents,
+        isReplace: true
+      }
+    ]);
+    await editableEditor.setSelections(
+      snapshot.selections.map(plainObjectToSelection)
+    );
+    await hatTokenMap.allocateHats({
+      forceTokenHats: serializedMarksToTokenHats(snapshot.marks, editor)
+    });
+    await editableEditor.focus();
+    return {
+      editor,
+      highlightRanges: [
+        ...Object.values(snapshot.marks ?? {}).map(
+          (range3) => toCharacterRange(plainObjectToRange(range3))
+        ),
+        ...(snapshot.highlights ?? []).flatMap(
+          (highlight) => highlight.ranges.map(plainObjectToGeneralizedRange)
+        )
+      ]
+    };
+  } catch (error62) {
+    if (retry) {
+      return await applySnapshot(
+        ide,
+        hatTokenMap,
+        void 0,
+        snapshot,
+        languageId
+      );
+    }
+    throw error62;
+  }
+}
+
+// ../lib-tutorial/src/tutorialWrapCommandRunner.ts
+function tutorialWrapCommandRunner(tutorial, commandRunner, currentTutorial) {
+  if (tutorial.state.type !== "doingTutorial") {
+    return commandRunner;
+  }
+  const currentStep = currentTutorial?.steps[tutorial.state.stepNumber];
+  if (currentStep?.trigger?.type !== "command") {
+    return commandRunner;
+  }
+  const trigger = currentStep.trigger;
+  return {
+    run: async (commandComplete) => {
+      const returnValue = await commandRunner.run(commandComplete);
+      if (isEqual_default(trigger.command.action, commandComplete.action)) {
+        await tutorial.next();
+      }
+      return returnValue;
+    }
+  };
+}
+
+// ../lib-tutorial/src/TutorialImpl.ts
+var HIGHLIGHT_COLOR = "highlight0";
+var TutorialImpl = class {
+  constructor(ide, hatTokenMap, customSpokenFormGenerator, contentProvider, hats) {
+    __publicField(this, "ide", ide);
+    __publicField(this, "hatTokenMap", hatTokenMap);
+    __publicField(this, "customSpokenFormGenerator", customSpokenFormGenerator);
+    __publicField(this, "contentProvider", contentProvider);
+    __publicField(this, "hats", hats);
+    /**
+     * The current editor that is being used to display the tutorial, if any.
+     */
+    __publicField(this, "editor");
+    /**
+     * The current highlight ranges that are being used to display the tutorial,
+     * if any. We store these so that we can remove them when user has gone off
+     * the tutorial path and then restore them when they come back.
+     */
+    __publicField(this, "highlightRanges", []);
+    /**
+     * The current state of the tutorial, as exposed by {@link Tutorial.state}.
+     */
+    __publicField(this, "state_", { type: "loading" });
+    /**
+     * If {@link state_} is "doingTutorial", this will be the fully parsed current
+     * tutorial, including information about triggers, etc.
+     */
+    __publicField(this, "currentTutorial");
+    __publicField(this, "notifier", new Notifier());
+    __publicField(this, "disposables", []);
+    __publicField(this, "rawTutorials");
+    const debouncer = new Debouncer(() => this.checkPreconditions(), 100);
+    const runDebouncer = () => debouncer.run();
+    this.rawTutorials = getTutorialsForContext("interactive");
+    if (this.state_.type === "loading") {
+      this.setState(this.getPickingTutorialState());
+    }
+    this.disposables.push(
+      this.ide.onDidChangeActiveTextEditor(runDebouncer),
+      this.ide.onDidChangeTextDocument(runDebouncer),
+      this.ide.onDidChangeVisibleTextEditors(runDebouncer),
+      this.ide.onDidChangeTextEditorSelection(runDebouncer),
+      this.ide.onDidOpenTextDocument(runDebouncer),
+      this.ide.onDidCloseTextDocument(runDebouncer),
+      this.ide.onDidChangeTextEditorVisibleRanges(runDebouncer),
+      customSpokenFormGenerator.onDidChangeCustomSpokenForms(
+        () => this.reparseCurrentTutorial()
+      ),
+      debouncer
+    );
+  }
+  /**
+   * This function is called when a scope type is visualized. If the current step
+   * is waiting for a visualization of the given scope type, the tutorial will
+   * advance to the next step.
+   * @param scopeType The scope type that was visualized
+   */
+  scopeTypeVisualized(scopeType) {
+    const state = this.state_;
+    if (state.type === "doingTutorial" && !state.hasErrors) {
+      const currentStep = this.currentTutorial.steps[state.stepNumber];
+      if (currentStep.trigger?.type === "visualize" && isEqual_default(currentStep.trigger.scopeType, scopeType)) {
+        void this.next();
+      }
+    }
+  }
+  /**
+   * @returns A {@link TutorialState} object to use when the user is picking a
+   * tutorial to start.
+   */
+  getPickingTutorialState() {
+    const tutorialProgress = this.ide.keyValueStore.get("tutorialProgress");
+    return {
+      type: "pickingTutorial",
+      tutorials: this.rawTutorials.map((rawContent) => ({
+        id: rawContent.id,
+        title: rawContent.title,
+        stepCount: rawContent.steps.length,
+        currentStep: tutorialProgress[rawContent.id]?.currentStep ?? 0
+      }))
+    };
+  }
+  dispose() {
+    for (const disposable of this.disposables) {
+      disposable.dispose();
+    }
+  }
+  wrapCommandRunner(_readableHatMap, commandRunner) {
+    return tutorialWrapCommandRunner(this, commandRunner, this.currentTutorial);
+  }
+  onState(callback2) {
+    return this.notifier.registerListener(callback2);
+  }
+  /**
+   * Reparse the current tutorial. This is useful when the user has changed the
+   * spoken forms and we need to reparse the tutorial to use their new spoken
+   * forms.
+   */
+  async reparseCurrentTutorial() {
+    if (this.currentTutorial == null || this.state_.type !== "doingTutorial") {
+      return;
+    }
+    const tutorialId = this.state_.id;
+    const { tutorialContent, state } = await loadTutorial(
+      this.contentProvider,
+      tutorialId,
+      this.customSpokenFormGenerator,
+      this.getRawTutorial(tutorialId),
+      this.ide.keyValueStore,
+      this.hats
+    );
+    this.currentTutorial = tutorialContent;
+    this.setState(
+      state.hasErrors ? {
+        ...state,
+        stepNumber: this.state_.stepNumber
+      } : {
+        ...state,
+        stepNumber: this.state_.stepNumber,
+        stepContent: tutorialContent.steps[this.state_.stepNumber].content
+      }
+    );
+    await this.checkPreconditions();
+  }
+  getRawTutorial(tutorialId) {
+    return this.rawTutorials.find(
+      (rawContent) => rawContent.id === tutorialId
+    );
+  }
+  async start(tutorialId) {
+    const resolvedTutorialId = typeof tutorialId === "number" ? this.rawTutorials[tutorialId].id : tutorialId;
+    const { tutorialContent, state } = await loadTutorial(
+      this.contentProvider,
+      resolvedTutorialId,
+      this.customSpokenFormGenerator,
+      this.getRawTutorial(resolvedTutorialId),
+      this.ide.keyValueStore,
+      this.hats
+    );
+    this.currentTutorial = tutorialContent;
+    this.setState(state);
+    await this.setupStep();
+  }
+  documentationOpened() {
+    const state = this.state_;
+    if (state.type === "doingTutorial" && !state.hasErrors) {
+      const currentStep = this.currentTutorial.steps[state.stepNumber];
+      if (currentStep.trigger?.type === "help") {
+        void this.next();
+      }
+    }
+  }
+  /**
+   * When currently doing a tutorial, change to a different step.
+   *
+   * @param getStep Indicates which step to change to
+   */
+  async changeStep(getStep) {
+    if (this.state_.type !== "doingTutorial") {
+      throw new Error("Not currently doing a tutorial");
+    }
+    if (this.state_.hasErrors) {
+      throw new Error("Please see error message in tutorial sidebar");
+    }
+    const newStepNumber = getStep(this.state_.stepNumber);
+    if (newStepNumber === this.state_.stepCount || newStepNumber < 0) {
+      await this.list();
+      return;
+    }
+    const nextStep = this.currentTutorial.steps[newStepNumber];
+    this.setState({
+      type: "doingTutorial",
+      hasErrors: false,
+      id: this.state_.id,
+      stepNumber: newStepNumber,
+      stepContent: nextStep.content,
+      stepCount: this.state_.stepCount,
+      title: this.state_.title,
+      preConditionsMet: true
+    });
+    await this.setupStep();
+  }
+  next() {
+    return this.changeStep((current2) => current2 + 1);
+  }
+  previous() {
+    return this.changeStep((current2) => current2 - 1);
+  }
+  restart() {
+    return this.changeStep(() => 0);
+  }
+  async resume() {
+    await this.setupStep();
+  }
+  async list() {
+    this.setState(this.getPickingTutorialState());
+    await this.setupStep();
+  }
+  setState(state) {
+    this.state_ = state;
+    void this.updateTutorialProgress(state);
+    this.notifier.notifyListeners(state);
+  }
+  async updateTutorialProgress(state) {
+    if (state.type === "doingTutorial") {
+      await this.ide.keyValueStore.set(
+        "tutorialProgress",
+        produce(this.ide.keyValueStore.get("tutorialProgress"), (draft) => {
+          draft[state.id] = {
+            currentStep: state.stepNumber
+          };
+        })
+      );
+    }
+  }
+  get state() {
+    return this.state_;
+  }
+  async setupStep() {
+    const { editor, highlightRanges } = await setupStep(
+      this.ide,
+      this.hatTokenMap,
+      this.editor,
+      this.state,
+      this.currentTutorial
+    );
+    if (this.editor !== editor && this.editor != null) {
+      await this.ide.setHighlightRanges(HIGHLIGHT_COLOR, this.editor, []);
+    }
+    this.editor = editor;
+    this.highlightRanges = highlightRanges;
+    await this.ensureHighlights();
+  }
+  async ensureHighlights() {
+    if (this.editor != null) {
+      if (this.state_.type === "doingTutorial" && this.state_.preConditionsMet) {
+        await this.ide.setHighlightRanges(
+          HIGHLIGHT_COLOR,
+          this.editor,
+          this.highlightRanges
+        );
+      } else {
+        await this.ide.setHighlightRanges(HIGHLIGHT_COLOR, this.editor, []);
+      }
+    }
+  }
+  async checkPreconditions() {
+    const state = this.state_;
+    if (state.type !== "doingTutorial" || state.hasErrors) {
+      return;
+    }
+    const currentStep = this.currentTutorial.steps[state.stepNumber];
+    const preconditionError = await arePreconditionsMet(
+      this.ide.activeTextEditor,
+      this.editor,
+      this.hatTokenMap,
+      currentStep
+    );
+    if (this.state_ !== state) {
+      this.debug(
+        `Tutorial ${state.id} step ${state.stepNumber + 1}: precondition check discarded because the tutorial state changed`
+      );
+      return;
+    }
+    const preConditionsMet = preconditionError == null;
+    if (!preConditionsMet) {
+      this.debug(
+        `Tutorial ${state.id} step ${state.stepNumber + 1}: ${preconditionError}`
+      );
+    }
+    if (preConditionsMet !== state.preConditionsMet) {
+      this.setState({
+        ...state,
+        preConditionsMet
+      });
+      await this.ensureHighlights();
+    }
+  }
+  debug(message) {
+    const debug = this.ide.configuration.getOwnConfiguration("debug");
+    if (debug) {
+      console.log(message);
+    }
+  }
+};
+
+// src/ide/JetbrainsTutorialContentProvider.ts
+var JetbrainsTutorialContentProvider = class {
+  constructor(client) {
+    __publicField(this, "client", client);
+  }
+  async loadFixture(tutorialId, fixtureName) {
+    return JSON.parse(this.client.readTutorialFixture(tutorialId, fixtureName));
   }
 };
 
@@ -57534,6 +58723,19 @@ async function activate(plugin, wasmDirectory) {
     plugin.client,
     engine.scopeProvider
   );
+  const tutorial = new TutorialImpl(
+    plugin.ide,
+    engine.hatTokenMap,
+    engine.customSpokenFormGenerator,
+    new JetbrainsTutorialContentProvider(plugin.client),
+    plugin.hats
+  );
+  engine.addCommandRunnerDecorator(tutorial);
+  tutorial.onState(
+    (state) => plugin.client.tutorialStateChanged(JSON.stringify(state))
+  );
+  plugin.scopeVisualizer.onDidChangeScopeType = (scopeType) => tutorial.scopeTypeVisualized(scopeType);
+  plugin.tutorial = tutorial;
   console.log("activate completed");
   return engine;
 }

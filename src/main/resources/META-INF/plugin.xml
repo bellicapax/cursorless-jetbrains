@@ -5,6 +5,8 @@
     <vendor>asoee</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <!-- The Cursorless tool window (tutorial sidebar) needs JCEF; without it the rest of the plugin still loads -->
+    <depends optional="true" config-file="cursorless-jcef.xml">com.intellij.modules.jcef</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 

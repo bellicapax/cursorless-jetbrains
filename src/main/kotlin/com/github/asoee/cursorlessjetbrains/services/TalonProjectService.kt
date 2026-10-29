@@ -1,5 +1,8 @@
 package com.github.asoee.cursorlessjetbrains.services
 
+import com.intellij.openapi.fileEditor.FileEditorManagerEvent
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.TextEditor
 import com.github.asoee.cursorlessjetbrains.cursorless.CursorlessEngine
 import com.github.asoee.cursorlessjetbrains.javet.JavetDriver
 import com.github.asoee.cursorlessjetbrains.javet.JavetDriverRestartListener
@@ -7,6 +10,8 @@ import com.github.asoee.cursorlessjetbrains.listeners.*
 import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.github.asoee.cursorlessjetbrains.tutorial.CursorlessTutorial
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
@@ -56,6 +61,7 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
         this.jsDriver = driver
         this.cursorlessEngine = engine
         this.editorManager = EditorManager(cursorlessEngine, this, cs)
+        this.editorManager.tutorialStateListener = { project.service<CursorlessTutorial>().stateChanged(it) }
         this.focusChangeListener = TalonFocusChangeListener(editorManager, project)
 
         // https://intellij-support.jetbrains.com/hc/en-us/community/posts/4578776718354-How-do-I-listen-for-editor-focus-events-
@@ -63,7 +69,20 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
             .eventMulticaster as EditorEventMulticasterEx
         m.addFocusChangeListener(this.focusChangeListener, this)
 
+        // Switching tabs changes which editors are visible. The tab left behind sends nothing of its own, so report
+        // both, or the engine keeps putting hats in an editor that's no longer on screen
+        project.messageBus.connect(this).subscribe(
+            FileEditorManagerListener.FILE_EDITOR_MANAGER,
+            object : FileEditorManagerListener {
+                override fun selectionChanged(event: FileEditorManagerEvent) {
+                    (event.oldEditor as? TextEditor)?.editor?.let { editorManager.editorChanged(it) }
+                    (event.newEditor as? TextEditor)?.editor?.let { editorManager.editorChanged(it) }
+                }
+            })
+
         settingsUpdated(TalonSettings.instance.state)
+        // The engine set its first tutorial state while starting, before the listener above existed
+        cursorlessEngine.tutorialState()?.let { project.service<CursorlessTutorial>().stateChanged(it) }
 
         // Talon rewrites ~/.cursorless/state.json when spoken forms change; the engine re-reads it when told
         spokenFormsPoller = AppExecutorUtil.getAppScheduledExecutorService()
@@ -168,7 +187,7 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
     }
 
     private fun updateCursorlessEngineSettings(settings: TalonSettings.State) {
-        cursorlessEngine.setCommandHistory(settings.commandHistory)
+        cursorlessEngine.setConfiguration(commandHistory = settings.commandHistory, debug = settings.debugLogging)
 
         val enabledShapes = settings.hatShapeSettings
             .filter { it.enabled }
@@ -211,6 +230,8 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
             editorManager.updateEngine(cursorlessEngine)
 
             settingsUpdated(TalonSettings.instance.state)
+        // The engine set its first tutorial state while starting, before the listener above existed
+        cursorlessEngine.tutorialState()?.let { project.service<CursorlessTutorial>().stateChanged(it) }
 
             logger.info("Reloading all editors after V8 restart...")
             editorManager.reloadAllEditors()

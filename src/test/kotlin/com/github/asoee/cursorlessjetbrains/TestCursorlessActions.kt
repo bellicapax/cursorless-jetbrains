@@ -7,10 +7,17 @@ import com.github.asoee.cursorlessjetbrains.commandserver.file.FileCommandServer
 import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorServiceTest.MainJavaFixture
 import com.github.asoee.cursorlessjetbrains.cursorless.*
 import com.github.asoee.cursorlessjetbrains.services.TalonProjectService
+import com.github.asoee.cursorlessjetbrains.tutorial.CursorlessTutorial
+import com.github.asoee.cursorlessjetbrains.tutorial.TutorialFixtures
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonArray
 import com.intellij.find.EditorSearchSession
 import com.intellij.notification.Notifications
 import com.intellij.notification.Notification
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.CaretState
@@ -37,6 +44,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -859,7 +867,7 @@ class TestCursorlessActions : BasePlatformTestCase() {
             assertTrue(notifications.any { it.content.contains("No command history entries found") })
         }
 
-        service.cursorlessEngine.setCommandHistory(true)
+        service.cursorlessEngine.setConfiguration(commandHistory = true, debug = false)
         try {
             assertNull(service.cursorlessEngine.executeCommand(take).error)
             val historyFile = historyDir.toFile().listFiles()!!.single()
@@ -875,7 +883,127 @@ class TestCursorlessActions : BasePlatformTestCase() {
                 assertTrue(report, report.contains("setSelection"))
             }
         } finally {
-            service.cursorlessEngine.setCommandHistory(false)
+            service.cursorlessEngine.setConfiguration(commandHistory = false, debug = false)
+        }
+    }
+
+    @Test
+    fun testTalonTutorialCommandsDriveTheTutorial() {
+        val fixture = mainJavaFixture()
+        fun talon(command: String, vararg args: String) = tutorialTalon(fixture, command, *args)
+        fun state() = tutorialState(fixture)
+        fun awaitOnPath() = awaitTutorialOnPath(fixture)
+
+        // "cursorless tutorial" sends the id; the tutorial opens its first step's document
+        talon("cursorless.tutorial.start", "introduction")
+        assertEquals("doingTutorial", state()["type"]!!.jsonPrimitive.content)
+        assertEquals("introduction", state()["id"]!!.jsonPrimitive.content)
+        assertEquals(0, state()["stepNumber"]!!.jsonPrimitive.int)
+        assertEquals(false, state()["hasErrors"]!!.jsonPrimitive.boolean)
+        awaitOnPath()
+        runInEdtAndWait {
+            val document = FileEditorManager.getInstance(fixture.project).selectedTextEditor!!.document.text
+            assertTrue(document, document.startsWith("Welcome to Cursorless!"))
+        }
+
+        // Saying the step's command ("take cap", as recorded) moves on to the next step, which is on the path too
+        sayRecordedCommand(fixture, "takeCap.yml")
+        assertEquals(1, state()["stepNumber"]!!.jsonPrimitive.int)
+        awaitOnPath()
+        talon("cursorless.tutorial.previous")
+        assertEquals(0, state()["stepNumber"]!!.jsonPrimitive.int)
+
+        talon("cursorless.tutorial.list")
+        assertEquals("pickingTutorial", state()["type"]!!.jsonPrimitive.content)
+
+        // "tutorial <number>" sends the zero-based position: the second tutorial
+        talon("cursorless.tutorial.start", "1")
+        assertEquals("basic-coding", state()["id"]!!.jsonPrimitive.content)
+        talon("cursorless.tutorial.list")
+    }
+
+    @Test
+    fun testIntroductionTutorialCanBeFollowedToTheEnd() {
+        followTutorialToTheEnd("introduction")
+    }
+
+    @Test
+    fun testBasicCodingTutorialCanBeFollowedToTheEnd() {
+        // Its steps run IDE actions (pour, dedent), whose edits the engine must know before the next step's setup
+        followTutorialToTheEnd("basic-coding")
+    }
+
+    /**
+     * Says each step's command, as recorded with the tutorial, and every step must stay on the path. Catches setup
+     * problems a single step misses, e.g. an edit that moved the caret off the selection the next step expects
+     */
+    private fun followTutorialToTheEnd(tutorialId: String) {
+        val fixture = mainJavaFixture()
+        tutorialTalon(fixture, "cursorless.tutorial.start", tutorialId)
+        tutorialTalon(fixture, "cursorless.tutorial.restart")
+        val commandsBySpokenForm = tutorialCommandFixtures(tutorialId)
+        val stepCount = tutorialState(fixture)["stepCount"]!!.jsonPrimitive.int
+
+        for (step in 0 until stepCount - 1) {
+            assertEquals(step, tutorialState(fixture)["stepNumber"]!!.jsonPrimitive.int)
+            awaitTutorialOnPath(fixture)
+            val spokenForm = tutorialState(fixture)["stepContent"]!!.jsonArray
+                .flatMap { it.jsonArray }
+                .firstOrNull { it.jsonObject["type"]!!.jsonPrimitive.content == "command" }
+                ?.jsonObject?.get("value")?.jsonPrimitive?.content
+            val fixtureName = spokenForm?.let { commandsBySpokenForm[it] }
+            if (fixtureName == null) {
+                // A step that waits for something other than a command, e.g. opening the docs
+                tutorialTalon(fixture, "cursorless.tutorial.next")
+            } else {
+                sayRecordedCommand(fixture, fixtureName, tutorialId)
+            }
+            assertEquals("after step ${step + 1} (\"$spokenForm\")", step + 1, tutorialState(fixture)["stepNumber"]!!.jsonPrimitive.int)
+        }
+        awaitTutorialOnPath(fixture)
+        tutorialTalon(fixture, "cursorless.tutorial.list")
+    }
+
+    private fun tutorialTalon(fixture: MainJavaFixture, command: String, vararg args: String) {
+        val argsJson = args.joinToString(",") { Json.encodeToString(it) }
+        val request = Json.decodeFromString<CommandServerRequest>(
+            """{"commandId": "$command", "args": [$argsJson], "waitForFinish": true, "returnCommandOutput": true, "uuid": "tutorial-test"}"""
+        )
+        assertNull(FileCommandServer().buildResponse(request, fixture.project).error)
+    }
+
+    private fun tutorialState(fixture: MainJavaFixture): JsonObject =
+        Json.parseToJsonElement(fixture.project.service<CursorlessTutorial>().stateJson).jsonObject
+
+    /** The step's document, selection and hats must match its recording, or the tutorial says you've left the path */
+    private fun awaitTutorialOnPath(fixture: MainJavaFixture) {
+        repeat(30) {
+            if (tutorialState(fixture)["preConditionsMet"]?.jsonPrimitive?.boolean == true) return
+            runInEdtAndWait { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
+            Thread.sleep(100)
+        }
+        fail("Tutorial step ${tutorialState(fixture)["stepNumber"]} says you've left the path")
+    }
+
+    /** Says a tutorial step's command as recorded in its fixture, through Talon's command server */
+    private fun sayRecordedCommand(fixture: MainJavaFixture, fixtureName: String, tutorialId: String = "introduction") {
+        val command = Json.parseToJsonElement(TutorialFixtures.readAsJson(tutorialId, fixtureName))
+            .jsonObject["command"]!!.toString()
+            // Talon's pre-phrase hat snapshot doesn't exist here
+            .replace("\"usePrePhraseSnapshot\":true", "\"usePrePhraseSnapshot\":false")
+        val request = Json.decodeFromString<CommandServerRequest>(
+            """{"commandId": "cursorless.command", "args": [$command], "waitForFinish": true, "returnCommandOutput": true, "uuid": "tutorial-say"}"""
+        )
+        assertNull(FileCommandServer().buildResponse(request, fixture.project).error)
+    }
+
+    /** The tutorial's recorded fixtures by their command's spoken form, e.g. "take cap" -> takeCap.yml */
+    private fun tutorialCommandFixtures(tutorialId: String): Map<String, String> {
+        // The bundled resources are in a jar here, so list them from the source tree; tests run in the project directory
+        val dir = java.io.File("src/main/resources/cursorless/tutorial/$tutorialId")
+        return dir.listFiles { file -> file.name.endsWith(".yml") }!!.associate { file ->
+            val command = Json.parseToJsonElement(TutorialFixtures.readAsJson(tutorialId, file.name)).jsonObject["command"]!!
+            command.jsonObject["spokenForm"]!!.jsonPrimitive.content to file.name
         }
     }
 
@@ -887,6 +1015,71 @@ class TestCursorlessActions : BasePlatformTestCase() {
         return Json.decodeFromString<JsonObject>(
             """{"version": 7, "spokenForm": "test", "usePrePhraseSnapshot": false, "action": $actionJson}"""
         )
+    }
+
+    @Test
+    fun testIdeEditsAreReportedBackToTheEngine() {
+        // When the IDE edits for the engine (pour, indent, ...), the engine must learn the edits and carets straight
+        // away; Rider's own report came after the next tutorial step had already edited from the old text
+        val fixture = mainJavaFixture()
+        val editorManager = fixture.projectService.editorManager
+        val document = fixture.editor.document
+        runInEdtAndWait { editorManager.editorStateNow(fixture.editor) }
+        val lineEnd = document.getLineEndOffset(4)
+
+        val result = editorManager.recordingIdeEdits(fixture.editor) {
+            WriteCommandAction.runWriteCommandAction(fixture.project) {
+                document.insertString(lineEnd, NEW_INDENTED_LINE)
+                fixture.editor.caretModel.moveToOffset(lineEnd + NEW_INDENTED_LINE.length)
+            }
+        }
+
+        val json = Json.parseToJsonElement(result).jsonObject
+        val change = json["changes"]!!.jsonArray.single().jsonObject
+        assertEquals(lineEnd, change["rangeOffset"]!!.jsonPrimitive.int)
+        assertEquals(0, change["rangeLength"]!!.jsonPrimitive.int)
+        assertEquals(NEW_INDENTED_LINE, change["text"]!!.jsonPrimitive.content)
+        val caret = json["selections"]!!.jsonArray.single().jsonObject["active"]!!.jsonObject
+        assertEquals(5, caret["line"]!!.jsonPrimitive.int)
+        assertEquals(8, caret["column"]!!.jsonPrimitive.int)
+    }
+
+    @Test
+    fun testRewritingADocumentOnlyChangesWhatDiffers() {
+        // The tutorial rewrites its document with the same text to set up a step, which must keep the selection the
+        // step expects. IntelliJ's own documents already skip unchanged text, so this guards the behavior rather than
+        // reproducing Rider, where the selection was lost after "take cap"
+        val fixture = mainJavaFixture()
+        val editorManager = fixture.projectService.editorManager
+        val document = fixture.editor.document
+        var editorId = ""
+        val selectionStart = document.getLineStartOffset(4) + 8
+        runInEdtAndWait {
+            editorId = editorManager.editorStateNow(fixture.editor).id
+            fixture.editor.selectionModel.setSelection(selectionStart, selectionStart + 6)
+        }
+        fun rewrite(text: String) = CursorlessEditorEdit().apply {
+            changes = listOf(CursorlessEditorChange().apply {
+                this.text = text; rangeOffset = 0; rangeLength = document.textLength
+            })
+        }
+
+        val textBefore = document.text
+        editorManager.documentUpdated(editorId, rewrite(textBefore))
+        runInEdtAndWait {
+            assertEquals(textBefore, document.text)
+            assertEquals(selectionStart, fixture.editor.selectionModel.selectionStart)
+            assertEquals(selectionStart + 6, fixture.editor.selectionModel.selectionEnd)
+        }
+
+        // A real change still applies, and text before it keeps its selection
+        val changedText = textBefore.replaceFirst("welcome", "goodbye")
+        assertFalse(changedText == textBefore)
+        editorManager.documentUpdated(editorId, rewrite(changedText))
+        runInEdtAndWait {
+            assertEquals(changedText, document.text)
+            assertEquals("System", fixture.editor.selectionModel.selectedText)
+        }
     }
 
     @Test
@@ -1128,6 +1321,9 @@ class TestCursorlessActions : BasePlatformTestCase() {
     }
 
     companion object {
+        /** What "pour" inserts after a line in a block: a new line, indented */
+        private const val NEW_INDENTED_LINE = "\n        "
+
         @JvmStatic
         @BeforeClass
         fun beforeClass() {
