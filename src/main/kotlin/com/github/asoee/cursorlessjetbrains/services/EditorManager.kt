@@ -28,6 +28,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.serialization.json.Json
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -168,6 +173,40 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
     }
 
 
+    // Set while a Cursorless command runs: IntelliJ merges consecutive undoable commands that share a group ID, so
+    // its edits and selection changes undo together, as one step, as they do in VS Code
+    @Volatile
+    private var undoGroupId: Any? = null
+
+    fun <T> asOneUndoStep(block: () -> T): T {
+        undoGroupId = Any()
+        try {
+            return block()
+        } finally {
+            undoGroupId = null
+        }
+    }
+
+    /**
+     * Runs [command] for the engine as part of the running Cursorless command's undo step, so IDE actions it runs
+     * (indent, comment, ...) undo together with the command's edits and selection changes
+     */
+    fun executeInUndoStep(command: VcCommand) {
+        val groupId = undoGroupId
+        if (groupId == null) {
+            service<CommandExecutorService>().execute(command)
+            return
+        }
+        ApplicationManager.getApplication().invokeAndWait {
+            CommandProcessor.getInstance().executeCommand(
+                command.project,
+                { service<CommandExecutorService>().execute(command) },
+                null,
+                groupId
+            )
+        }
+    }
+
     fun setSelection(editorId: String, selections: Array<CursorlessRange>) {
         val editor = editorsById[editorId]
         if (editor != null) {
@@ -184,10 +223,15 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
                                     val endPos = it.logicalEndPosition(editor)
                                     CaretState(endPos, startPos, endPos)
                                 }
+                                // Rider can leave a removed caret's selection painted when the caret list
+                                // shrinks; removing the extra carets first, as Escape does, clears it
+                                if (carets.size < editor.caretModel.caretCount) {
+                                    editor.caretModel.removeSecondaryCarets()
+                                }
                                 editor.caretModel.caretsAndSelections = carets
                             },
                             "Select",
-                            "SelectGroup"
+                            undoGroupId ?: "SelectGroup"
                         )
                     }
                     editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
@@ -218,23 +262,52 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         }
     }
 
-    fun clipboardPaste(editorId: String) {
-        val editor = editorsById[editorId]
-        if (editor != null) {
-            logger.debug("launch action : clipboardPaste")
-            ApplicationManager.getApplication().invokeAndWait {
-                val actionManager = ActionManager.getInstance()
-
-                val pasteAction = actionManager.getAction(IdeActions.ACTION_EDITOR_PASTE_SIMPLE)
-                actionManager.tryToExecute(
-                    pasteAction,
-                    null,
-                    editor.component,
-                    null,
-                    true
+    /**
+     * Pastes with the IDE's paste action and returns its edits as JSON [{rangeOffset, rangeLength, text}], so the
+     * engine can track the pasted text straight away; null when there is no such editor.
+     */
+    fun clipboardPaste(editorId: String): String? {
+        val editor = editorsById[editorId] ?: return null
+        logger.debug("launch action : clipboardPaste")
+        val changes = mutableListOf<JsonObject>()
+        ApplicationManager.getApplication().invokeAndWait {
+            val actionManager = ActionManager.getInstance()
+            val pasteAction = actionManager.getAction(IdeActions.ACTION_EDITOR_PASTE_SIMPLE)
+            val recorder = Disposer.newDisposable()
+            editor.document.addDocumentListener(object : DocumentListener {
+                override fun documentChanged(event: DocumentEvent) {
+                    changes.add(
+                        JsonObject(
+                            mapOf(
+                                "rangeOffset" to JsonPrimitive(event.offset),
+                                "rangeLength" to JsonPrimitive(event.oldLength),
+                                "text" to JsonPrimitive(event.newFragment.toString()),
+                            )
+                        )
+                    )
+                }
+            }, recorder)
+            try {
+                // The paste action's own command nests inside this one, so it joins the Cursorless command's undo step
+                CommandProcessor.getInstance().executeCommand(
+                    editor.project,
+                    {
+                        actionManager.tryToExecute(
+                            pasteAction,
+                            null,
+                            editor.component,
+                            null,
+                            true
+                        )
+                    },
+                    "Paste",
+                    undoGroupId
                 )
+            } finally {
+                Disposer.dispose(recorder)
             }
         }
+        return JsonArray(changes).toString()
     }
 
     fun documentUpdated(editorId: String, edit: CursorlessEditorEdit) {
@@ -274,7 +347,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
                         editor.project?.let { PsiDocumentManager.getInstance(it).commitDocument(document) }
                     },
                     "Insert",
-                    "insertGroup"
+                    undoGroupId ?: "insertGroup"
                 )
             }
         }
@@ -368,8 +441,8 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
             editorManager.clipboardCopy(editorId, selections)
         }
 
-        override fun clipboardPaste(editorId: String) {
-            editorManager.clipboardPaste(editorId)
+        override fun clipboardPaste(editorId: String): String? {
+            return editorManager.clipboardPaste(editorId)
         }
 
         override fun executeCommand(editorId: String, command: String, args: Array<String>) {
@@ -381,7 +454,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
             if (ActionManager.getInstance().getAction(command) == null) {
                 throw IllegalArgumentException("Unknown IDE action: $command")
             }
-            service<CommandExecutorService>().execute(IDEActionCommand(project, command, editor))
+            editorManager.executeInUndoStep(IDEActionCommand(project, command, editor))
         }
 
         override fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand) {
@@ -396,7 +469,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
                         rangeCommand.restoreSelection,
                         rangeCommand.ideCommand
                     )
-                    service<CommandExecutorService>().execute(command)
+                    editorManager.executeInUndoStep(command)
                 }
             }
         }
@@ -406,7 +479,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
             editorManager.editorsById[editorId]?.let { editor ->
                 editor.project?.let { project ->
                     val command = InsertLineAfterCommand.fromRanges(project, editor, ranges.toList())
-                    service<CommandExecutorService>().execute(command)
+                    editorManager.executeInUndoStep(command)
                 }
             }
         }
@@ -416,7 +489,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
             editorManager.editorsById[editorId]?.let { editor ->
                 editor.project?.let { project ->
                     val command = InsertSnippetCommand(project, editor, snippet)
-                    service<CommandExecutorService>().execute(command)
+                    editorManager.executeInUndoStep(command)
                 }
             }
         }

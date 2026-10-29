@@ -15527,7 +15527,22 @@ var JetbrainsEditor = class {
     await this.ide.clipboard.copy(this.id, ranges);
   }
   async clipboardPaste() {
-    await this.ide.clipboard.paste(this.id);
+    const changesJson = this.client.clipboardPaste(this.id);
+    if (!changesJson) {
+      return;
+    }
+    const pasteChanges = JSON.parse(changesJson);
+    for (const { rangeOffset, rangeLength, text } of pasteChanges) {
+      const range3 = new Range(
+        this.document.positionAt(rangeOffset),
+        this.document.positionAt(rangeOffset + rangeLength)
+      );
+      const contentChanges = this.document.edit([{ range: range3, text }]);
+      this.ide.emitDidChangeTextDocument({
+        document: this.document,
+        contentChanges
+      });
+    }
   }
   async indentLine(ranges) {
     const command = new JetbrainsEditorCommand(
@@ -57075,3 +57090,4 @@ itertools/dist/index.js:
 js-yaml/dist/js-yaml.mjs:
   (*! js-yaml 5.5.0 https://github.com/nodeca/js-yaml @license MIT *)
 */
+//# sourceMappingURL=cursorless.js.map

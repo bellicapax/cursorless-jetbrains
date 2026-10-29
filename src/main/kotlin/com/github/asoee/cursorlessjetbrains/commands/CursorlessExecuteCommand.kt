@@ -44,7 +44,7 @@ class CursorlessExecuteCommand(project: Project, private val jsonObjects: List<J
 
     override fun executeForResult(context: CommandContext): JsonElement? {
         val service = project.service<TalonProjectService>()
-        val result = service.cursorlessEngine.executeCommand(jsonObjects)
+        val result = service.editorManager.asOneUndoStep { service.cursorlessEngine.executeCommand(jsonObjects) }
 
         if (!result.success) {
             throw RuntimeException(result.error ?: "Cursorless command execution failed")
