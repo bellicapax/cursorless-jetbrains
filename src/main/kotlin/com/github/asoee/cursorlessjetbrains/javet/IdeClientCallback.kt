@@ -1,5 +1,6 @@
 package com.github.asoee.cursorlessjetbrains.javet
 
+import com.github.asoee.cursorlessjetbrains.tutorial.TutorialFixtures
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.caoccao.javet.annotations.V8Function
 import com.github.asoee.cursorlessjetbrains.cursorless.*
@@ -31,8 +32,9 @@ class IdeClientCallback {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
 
-        override fun documentUpdated(editorId: String, edit: CursorlessEditorEdit) {
+        override fun documentUpdated(editorId: String, edit: CursorlessEditorEdit): String? {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
+            return null
         }
 
         override fun clipboardCopy(editorId: String, selections: Array<CursorlessRange>) {
@@ -44,16 +46,19 @@ class IdeClientCallback {
             return null
         }
 
-        override fun executeCommand(editorId: String, command: String, args: Array<String>) {
+        override fun executeCommand(editorId: String, command: String, args: Array<String>): String? {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
+            return null
         }
 
-        override fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand) {
+        override fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand): String? {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
+            return null
         }
 
-        override fun insertLineAfter(editorId: String, ranges: Array<CursorlessRange>) {
+        override fun insertLineAfter(editorId: String, ranges: Array<CursorlessRange>): String? {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
+            return null
         }
 
         override fun insertSnippet(editorId: String, snippet: String) {
@@ -129,6 +134,9 @@ class IdeClientCallback {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
 
+        override fun tutorialStateChanged(stateJson: String) {
+        }
+
     }
 
 
@@ -149,10 +157,10 @@ class IdeClientCallback {
     }
 
     @V8Function
-    fun documentUpdated(editorId: String, updateJson: String) {
+    fun documentUpdated(editorId: String, updateJson: String): String? {
         logger.info("DocumentUpdated: $updateJson")
         val edit = Json { ignoreUnknownKeys = true }.decodeFromString<CursorlessEditorEdit>(updateJson)
-        cursorlessCallback.documentUpdated(editorId, edit)
+        return cursorlessCallback.documentUpdated(editorId, edit)
     }
 
     @V8Function
@@ -176,27 +184,27 @@ class IdeClientCallback {
     }
 
     @V8Function
-    fun executeCommand(editorId: String, command: String, argsJson: String) {
+    fun executeCommand(editorId: String, command: String, argsJson: String): String? {
         logger.info("IdeClientCallback.executeCommand: $command, $argsJson")
         // Command args can be any JSON value; pass strings through as-is and anything else as JSON text
         val args = jsonDecoder.decodeFromString<JsonArray>(argsJson)
             .map { (it as? JsonPrimitive)?.takeIf { p -> p.isString }?.content ?: it.toString() }
             .toTypedArray()
-        cursorlessCallback.executeCommand(editorId, command, args)
+        return cursorlessCallback.executeCommand(editorId, command, args)
     }
 
     @V8Function
-    fun executeRangeCommand(editorId: String, commandJson: String) {
+    fun executeRangeCommand(editorId: String, commandJson: String): String? {
         logger.info("IdeClientCallback.executeCommand:  $commandJson")
         val rangeCommand = Json { ignoreUnknownKeys = true }.decodeFromString<CursorlessEditorCommand>(commandJson)
-        cursorlessCallback.executeRangeCommand(editorId, rangeCommand)
+        return cursorlessCallback.executeRangeCommand(editorId, rangeCommand)
     }
 
     @V8Function
-    fun insertLineAfter(editorId: String, rangesJson: String) {
+    fun insertLineAfter(editorId: String, rangesJson: String): String? {
         logger.info("IdeClientCallback.insertLineAfter: $rangesJson")
         val ranges = Json { ignoreUnknownKeys = true }.decodeFromString<Array<CursorlessRange>>(rangesJson)
-        cursorlessCallback.insertLineAfter(editorId, ranges)
+        return cursorlessCallback.insertLineAfter(editorId, ranges)
     }
 
     @V8Function
@@ -297,6 +305,16 @@ class IdeClientCallback {
     fun showMessage(type: String, id: String, message: String) {
         logger.info("IdeClientCallback.showMessage: $type $id $message")
         cursorlessCallback.showMessage(type, id, message)
+    }
+
+    @V8Function
+    fun readTutorialFixture(tutorialId: String, fixtureName: String): String {
+        return TutorialFixtures.readAsJson(tutorialId, fixtureName)
+    }
+
+    @V8Function
+    fun tutorialStateChanged(stateJson: String) {
+        cursorlessCallback.tutorialStateChanged(stateJson)
     }
 
     @V8Function

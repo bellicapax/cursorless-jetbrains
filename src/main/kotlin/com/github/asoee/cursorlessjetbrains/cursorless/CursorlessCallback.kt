@@ -6,14 +6,18 @@ interface CursorlessCallback {
 
     fun onHatUpdate(hatRanges: Array<HatRange>)
     fun setSelection(editorId: String, selections: Array<CursorlessRange>)
-    fun documentUpdated(editorId: String, edit: CursorlessEditorEdit)
+    /** Applies the edit; returns the editor's selections afterwards as JSON, as the IDE moves carets with the text */
+    fun documentUpdated(editorId: String, edit: CursorlessEditorEdit): String?
     fun clipboardCopy(editorId: String, selections: Array<CursorlessRange>)
     /** Returns the paste's edits as JSON [{rangeOffset, rangeLength, text}] */
     fun clipboardPaste(editorId: String): String?
-    fun executeCommand(editorId: String, command: String, args: Array<String>)
-    fun insertLineAfter(editorId: String, ranges: Array<CursorlessRange>)
+    /** Runs it in the IDE; returns JSON {changes, selections}: the edits it made and the carets after, or null */
+    fun executeCommand(editorId: String, command: String, args: Array<String>): String?
+    /** Runs it in the IDE; returns JSON {changes, selections}: the edits it made and the carets after, or null */
+    fun insertLineAfter(editorId: String, ranges: Array<CursorlessRange>): String?
     fun insertSnippet(editorId: String, snippet: String)
-    fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand)
+    /** Runs it in the IDE; returns JSON {changes, selections}: the edits it made and the carets after, or null */
+    fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand): String?
     fun revealLine(editorId: String, line: Int, revealAt: String)
     fun flashRanges(flashRanges: Array<CursorlessFlashRange>)
     fun setHighlightRanges(highlightId: String?, editorId: String, ranges: Array<CursorlessGeneralizedRange>)
@@ -31,4 +35,5 @@ interface CursorlessCallback {
     fun commandHistoryEntries(): String
     fun openUntitledTextDocument(content: String, language: String?): String
     fun showMessage(type: String, id: String, message: String)
+    fun tutorialStateChanged(stateJson: String)
 }
