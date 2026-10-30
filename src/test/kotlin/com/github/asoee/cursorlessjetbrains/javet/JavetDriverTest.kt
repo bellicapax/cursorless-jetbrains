@@ -298,6 +298,9 @@ class CountingCallback : CursorlessCallback {
     override fun tutorialStateChanged(stateJson: String) {
     }
 
+    override fun scopeListChanged(scopeListJson: String) {
+    }
+
     override fun revealRange(editorId: String, range: CursorlessRange) {
     }
 
