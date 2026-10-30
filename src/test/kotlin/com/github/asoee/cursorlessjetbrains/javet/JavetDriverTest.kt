@@ -56,6 +56,8 @@ class JavetDriverTest {
             visible = true,
             editable = true,
             writable = true,
+            tabSize = 4,
+            insertSpaces = true,
         )
 
         driver.editorChanged(state)
@@ -189,6 +191,8 @@ class JavetDriverTest {
             visible = true,
             editable = true,
             writable = true,
+            tabSize = 4,
+            insertSpaces = true,
         )
 
         // Perform operations with first driver
@@ -292,6 +296,12 @@ class CountingCallback : CursorlessCallback {
     }
 
     override fun tutorialStateChanged(stateJson: String) {
+    }
+
+    override fun revealRange(editorId: String, range: CursorlessRange) {
+    }
+
+    override fun openUrl(url: String) {
     }
 
     override fun executeCommand(editorId: String, command: String, args: Array<String>): String? {

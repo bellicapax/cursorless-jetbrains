@@ -80,7 +80,9 @@ fun serializeEditor(editor: Editor, editorId: String, psiFile: PsiFile?): Editor
             selections,
             visible,
             editable,
-            writable
+            writable,
+            editor.settings.getTabSize(project),
+            !editor.settings.isUseTabCharacter(project),
         )
     }
     return edtState

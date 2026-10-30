@@ -8,6 +8,7 @@ import com.github.asoee.cursorlessjetbrains.sync.EditorState
 import com.github.asoee.cursorlessjetbrains.sync.HatRange
 import com.github.asoee.cursorlessjetbrains.sync.serializeEditor
 import com.github.asoee.cursorlessjetbrains.ui.CursorlessContainer
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -43,6 +44,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import com.github.asoee.cursorlessjetbrains.util.extensionForLanguage
 import com.github.asoee.cursorlessjetbrains.util.isInTerminal
+import com.github.asoee.cursorlessjetbrains.util.requireWritable
 import com.github.asoee.cursorlessjetbrains.settings.CursorlessKeyValueStore
 import java.awt.KeyboardFocusManager
 import java.nio.file.Files
@@ -181,6 +183,9 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
 
     /** Receives the engine's tutorial state, for the Cursorless tool window */
     var tutorialStateListener: ((String) -> Unit)? = null
+
+    // Replaceable so tests don't open a browser
+    internal var urlOpener: (String) -> Unit = { BrowserUtil.browse(it) }
 
     // Replaceable so tests keep their history out of the real ~/.cursorless
     internal var commandHistoryFiles = CommandHistoryFiles()
@@ -338,12 +343,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         logger.info("Applying ${edit.changes.size} Cursorless change(s) to $editorId")
         ApplicationManager.getApplication().invokeAndWait {
             val document = editor.document
-            // requestWriting runs the IDE's read-only handling, e.g. a Perforce checkout, as typing would.
-            // Throwing here rejects the command in the engine, so Talon gets an error instead of a silent no-op
-            if (!FileDocumentManager.getInstance().requestWriting(document, editor.project)) {
-                val fileName = FileDocumentManager.getInstance().getFile(document)?.name ?: editorId
-                throw IllegalStateException("Cannot edit read-only file $fileName")
-            }
+            requireWritable(editor)
             ApplicationManager.getApplication().runWriteAction {
                 CommandProcessor.getInstance().executeCommand(
                     editor.project,
@@ -560,6 +560,8 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
             thisLogger().info("Executing insertLineAfter $ranges")
             val editor = editorManager.editorsById[editorId] ?: return null
             val project = editor.project ?: return null
+            // The command edits the document directly, so check it out first, as the engine's own edits do
+            ApplicationManager.getApplication().invokeAndWait { requireWritable(editor) }
             val command = InsertLineAfterCommand.fromRanges(project, editor, ranges.toList())
             return editorManager.recordingIdeEdits(editor) { editorManager.executeInUndoStep(command) }
         }
@@ -568,6 +570,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
             thisLogger().info("Executing insertSnippet $snippet")
             editorManager.editorsById[editorId]?.let { editor ->
                 editor.project?.let { project ->
+                    ApplicationManager.getApplication().invokeAndWait { requireWritable(editor) }
                     val command = InsertSnippetCommand(project, editor, snippet)
                     editorManager.executeInUndoStep(command)
                 }
@@ -582,6 +585,21 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
                     service<CommandExecutorService>().execute(command)
                 }
             }
+        }
+
+        override fun revealRange(editorId: String, range: CursorlessRange) {
+            val editor = editorManager.editorsById[editorId] ?: return
+            ApplicationManager.getApplication().invokeAndWait {
+                if (!editor.isDisposed) {
+                    editor.scrollingModel.scrollTo(range.logicalStartPosition(editor), ScrollType.MAKE_VISIBLE)
+                }
+            }
+        }
+
+        override fun openUrl(url: String) {
+            // Only web links: the engine sends text from the document, which shouldn't open anything else
+            require(url.startsWith("http://") || url.startsWith("https://")) { "Not a web link: $url" }
+            editorManager.urlOpener(url)
         }
 
         override fun flashRanges(flashRanges: Array<CursorlessFlashRange>) {

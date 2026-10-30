@@ -40,7 +40,10 @@ class RangedActionCommand(
             val endPos = range.logicalEndPosition(editor)
             CaretState(endPos, startPos, endPos)
         }
-        editor.caretModel.caretsAndSelections = carets
+        // No ranges (e.g. "git stage" on a whole file) leaves the carets as they are; the IDE rejects an empty list
+        if (carets.isNotEmpty()) {
+            editor.caretModel.caretsAndSelections = carets
+        }
         if (ActionManager.getInstance().getAction(ideCommandId) == null) {
             thisLogger().warn("IDEActionCommand not found: $ideCommandId")
             return "ERROR"

@@ -54,6 +54,20 @@
                 class="com.github.asoee.cursorlessjetbrains.action.CursorlessToggleCommand"
                 text="Cursorless Toggle"
                 description="Toggle cursorless hats"/>
+
+        <!-- Cursorless's git actions ("git stage", "git unstage", "git accept"), on the caret or selection -->
+        <action id="Cursorless.GitStageFile" class="com.github.asoee.cursorlessjetbrains.action.GitStageFileAction"
+                text="Cursorless: Git Stage File" description="Stage the whole file (git add)"/>
+        <action id="Cursorless.GitUnstageFile" class="com.github.asoee.cursorlessjetbrains.action.GitUnstageFileAction"
+                text="Cursorless: Git Unstage File" description="Unstage the whole file"/>
+        <action id="Cursorless.GitStageLines" class="com.github.asoee.cursorlessjetbrains.action.GitStageLinesAction"
+                text="Cursorless: Git Stage Selected Lines" description="Stage only the changes on the selected lines"/>
+        <action id="Cursorless.GitUnstageLines" class="com.github.asoee.cursorlessjetbrains.action.GitUnstageLinesAction"
+                text="Cursorless: Git Unstage Selected Lines" description="Unstage only the staged changes on the selected lines"/>
+        <action id="Cursorless.GitRevertLines" class="com.github.asoee.cursorlessjetbrains.action.GitRevertLinesAction"
+                text="Cursorless: Git Revert Selected Lines" description="Put the selected lines' unstaged changes back to the staged version"/>
+        <action id="Cursorless.AcceptConflictSide" class="com.github.asoee.cursorlessjetbrains.action.AcceptConflictSideAction"
+                text="Cursorless: Accept Conflict Side at Caret" description="Keep the side of the merge conflict the caret is in"/>
     </actions>
 
     <projectListeners>

@@ -74,11 +74,12 @@ fun editorLanguage(editor: Editor): String? {
  * - WASM files: packages/cursorless-engine/src/languages/TreeSitterWasmLanguages.ts
  * - Language queries: packages/cursorless-engine/src/languages/LanguageDefinitions.ts
  */
+// Cursorless's language ids, which are VS Code's (e.g. "shellscript" for shell scripts, as its queries are named)
 private val extensionLanguages = mapOf(
     "agda" to "agda",
-    "sh" to "bash",
-    "bash" to "bash",
-    "zsh" to "bash",
+    "sh" to "shellscript",
+    "bash" to "shellscript",
+    "zsh" to "shellscript",
     "c" to "c",
     "h" to "c",
     "cs" to "csharp",

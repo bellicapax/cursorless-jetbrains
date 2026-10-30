@@ -52832,10 +52832,10 @@ var COMMAND_CAPABILITIES = {
   unfold: { acceptsLocation: true },
   showReferences: { acceptsLocation: true },
   insertLineAfter: { acceptsLocation: true },
-  gitAccept: { acceptsLocation: false },
-  gitRevert: { acceptsLocation: false },
-  gitStage: { acceptsLocation: false },
-  gitUnstage: { acceptsLocation: false }
+  gitAccept: { acceptsLocation: true },
+  gitRevert: { acceptsLocation: true },
+  gitStage: { acceptsLocation: true },
+  gitUnstage: { acceptsLocation: true }
 };
 var JetbrainsCapabilities = class {
   constructor() {
@@ -53048,13 +53048,19 @@ var JetbrainsEditor = class {
     await this.client.focusEditor(this.id);
     this.ide.setActiveEditor(this, true);
   }
-  revealRange(_range) {
+  revealRange(range3) {
+    this.client.revealRange(this.id, JSON.stringify(range3));
     return Promise.resolve();
   }
   async revealLine(lineNumber, at) {
     await this.client.revealLine(this.id, lineNumber, at);
   }
   async openLink(range3, _options) {
+    const url2 = this.urlAt(range3);
+    if (url2 != null) {
+      this.client.openUrl(url2);
+      return;
+    }
     const command = new JetbrainsEditorCommand(
       [range3],
       true,
@@ -53152,6 +53158,19 @@ var JetbrainsEditor = class {
       this.client.executeRangeCommand(this.id, JSON.stringify(command))
     );
   }
+  /** The http(s) URL on the range's first line that overlaps the range, if any */
+  urlAt(range3) {
+    const line = this.document.lineAt(range3.start.line).text;
+    const end = range3.end.line === range3.start.line ? range3.end.character : line.length;
+    for (const match of line.matchAll(/https?:\/\/[^\s<>"'`]+/g)) {
+      const url2 = match[0].replace(/[.,;:!?)\]}]+$/, "");
+      const urlStart = match.index;
+      if (urlStart <= end && urlStart + url2.length >= range3.start.character) {
+        return url2;
+      }
+    }
+    return void 0;
+  }
   async revealDefinition(range3) {
     const command = new JetbrainsEditorCommand(
       range3 ? [range3] : [],
@@ -53168,7 +53187,7 @@ var JetbrainsEditor = class {
       range3 ? [range3] : [],
       true,
       false,
-      "QuickImplementations"
+      "GotoTypeDeclaration"
     );
     this.applyIdeEdits(
       this.client.executeRangeCommand(this.id, JSON.stringify(command))
@@ -53213,23 +53232,36 @@ var JetbrainsEditor = class {
   editNewNotebookCellBelow() {
     throw new Error("editNewNotebookCellBelow not implemented.");
   }
-  async gitAccept(_range) {
-    throw new Error("gitAccept not implemented.");
+  // Git actions run on the target as the plugin's own IDE actions, which work with or without the IDE's staging
+  // area; revert falls back to IntelliJ's Rollback Lines outside git
+  async gitAccept(range3) {
+    this.runGitAction(range3, "Cursorless.AcceptConflictSide");
   }
-  async gitRevert(_range) {
-    throw new Error("gitRevert not implemented.");
+  async gitRevert(range3) {
+    this.runGitAction(range3, "Cursorless.GitRevertLines");
   }
   async gitStageFile() {
-    throw new Error("gitStageFile not implemented.");
+    this.runGitAction(void 0, "Cursorless.GitStageFile");
   }
   async gitUnstageFile() {
-    throw new Error("gitUnstageFile not implemented.");
+    this.runGitAction(void 0, "Cursorless.GitUnstageFile");
   }
-  async gitStageRange(_range) {
-    throw new Error("gitStageRange not implemented.");
+  async gitStageRange(range3) {
+    this.runGitAction(range3, "Cursorless.GitStageLines");
   }
-  async gitUnstageRange(_range) {
-    throw new Error("gitUnstageRange not implemented.");
+  async gitUnstageRange(range3) {
+    this.runGitAction(range3, "Cursorless.GitUnstageLines");
+  }
+  runGitAction(range3, actionId) {
+    const command = new JetbrainsEditorCommand(
+      range3 ? [range3] : [],
+      true,
+      true,
+      actionId
+    );
+    this.applyIdeEdits(
+      this.client.executeRangeCommand(this.id, JSON.stringify(command))
+    );
   }
 };
 
@@ -53262,7 +53294,14 @@ function createTextEditor(client, ide, editorState) {
   editor.isVisible = editorState.visible;
   editor.isEditable = editorState.editable;
   editor.isWritable = editorState.writable;
+  editor.options = editorOptions(editorState);
   return editor;
+}
+function editorOptions(editorState) {
+  return {
+    tabSize: editorState.tabSize ?? 4,
+    insertSpaces: editorState.insertSpaces ?? true
+  };
 }
 function createSelection(document, selection) {
   return new Selection(
@@ -53527,6 +53566,7 @@ function updateEditor(editor, editorState) {
   editor.isVisible = editorState.visible;
   editor.isEditable = editorState.editable;
   editor.isWritable = editorState.writable;
+  editor.options = editorOptions(editorState);
 }
 function textChange(oldDocument, newText) {
   const oldText = oldDocument.getText();
