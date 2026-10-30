@@ -1,7 +1,6 @@
 package com.github.asoee.cursorlessjetbrains.util
 
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId
+import com.github.asoee.cursorlessjetbrains.terminal.TerminalShell
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfo
@@ -19,17 +18,12 @@ fun isInTerminal(component: Component): Boolean {
 
 /**
  * Whether [project]'s terminal runs PowerShell, where Ctrl+A selects what's been typed (in bash or zsh it moves to
- * the start of the line). Read from the Terminal plugin's settings, which the plugin doesn't depend on; if they can't
- * be read, PowerShell is assumed on Windows, its default shell there.
+ * the start of the line). If the Terminal plugin's settings can't be read, PowerShell is assumed on Windows, its
+ * default shell there.
  */
 fun isTerminalPowerShell(project: Project): Boolean {
-    val shellPath = runCatching {
-        val loader = PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.plugins.terminal"))?.pluginClassLoader
-            ?: return@runCatching null
-        val provider = Class.forName("org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider", true, loader)
-        val options = provider.getMethod("getInstance", Project::class.java).invoke(null, project)
-        provider.getMethod("getShellPath").invoke(options) as? String
-    }.getOrNull() ?: return SystemInfo.isWindows
+    val shellPath = runCatching { project.getService(TerminalShell::class.java)?.shellPath() }.getOrNull()
+        ?: return SystemInfo.isWindows
     val shell = shellPath.substringAfterLast('/').substringAfterLast('\\').lowercase()
     return shell.startsWith("powershell") || shell.startsWith("pwsh")
 }

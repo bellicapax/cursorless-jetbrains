@@ -5,6 +5,8 @@
     <vendor>asoee</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <!-- The terminal's shell, for editing keys sent to it; without the Terminal plugin the rest still loads -->
+    <depends optional="true" config-file="cursorless-terminal.xml">org.jetbrains.plugins.terminal</depends>
     <!-- The Cursorless tool window (tutorial sidebar) needs JCEF; without it the rest of the plugin still loads -->
     <depends optional="true" config-file="cursorless-jcef.xml">com.intellij.modules.jcef</depends>
 
