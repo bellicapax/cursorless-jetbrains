@@ -13,8 +13,10 @@ class AnalyzeCommandHistoryCommand(project: Project) : VcCommand(project) {
         }
     }
 
+    // On the EDT like cursorless.command: the engine opens the report through the EDT while it holds the engine, so
+    // from a background thread it would wait for an EDT that may itself be waiting to enter the engine
     override fun executionMode(): ExecutionMode {
-        return ExecutionMode.BACKGROUND
+        return ExecutionMode.EDT
     }
 
     override fun execute(context: CommandContext): String {
