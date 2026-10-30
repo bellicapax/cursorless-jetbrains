@@ -37,6 +37,7 @@ class CommandRegistryService {
         registerCommand("cursorless.tutorial.resume", TutorialCommand.of("tutorialResume"))
         registerCommand("cursorless.tutorial.list", TutorialCommand.of("tutorialList"))
         registerCommand("cursorless.showSidebar", ShowSidebarCommand::fromArgs)
+        registerCommand("cursorless.toggleDecorations", ToggleDecorationsCommand::fromArgs)
         registerCommand("cursorless.showScopeVisualizer", ScopeVisualizerCommand::show)
         registerCommand("cursorless.hideScopeVisualizer", ScopeVisualizerCommand::hide)
         registerCommand("cursorless.showCheatsheet", ShowCheatsheetCommand::fromArgs)

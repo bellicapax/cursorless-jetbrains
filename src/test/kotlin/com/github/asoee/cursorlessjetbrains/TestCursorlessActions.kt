@@ -1,5 +1,8 @@
 package com.github.asoee.cursorlessjetbrains
 
+import com.intellij.openapi.project.DumbAware
+import com.github.asoee.cursorlessjetbrains.commands.CommandRequest
+import com.github.asoee.cursorlessjetbrains.commands.CommandRegistryService
 import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorService
 import com.github.asoee.cursorlessjetbrains.commands.ShowCheatsheetCommand
 import com.github.asoee.cursorlessjetbrains.commandserver.file.CommandServerRequest
@@ -59,6 +62,7 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import com.github.asoee.cursorlessjetbrains.scopes.CursorlessScopeList
 import com.github.asoee.cursorlessjetbrains.scopes.ScopeListPanel
+import com.github.asoee.cursorlessjetbrains.settings.HatsToggle
 import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
 import java.awt.Color
 import com.intellij.xdebugger.XDebuggerManager
@@ -914,6 +918,37 @@ class TestCursorlessActions : BasePlatformTestCase() {
         } finally {
             scopeList.setVisible(false)
             fixture.projectService.cursorlessEngine.hideScopeVisualizer()
+        }
+    }
+
+    @Test
+    fun testToggleDecorationsTurnsTheHatsOffAndOn() {
+        // Talon's cursorless.toggleDecorations, and the "Cursorless: Toggle Hats" action, which works while indexing
+        val fixture = mainJavaFixture()
+        val registry = fixture.project.service<CommandRegistryService>()
+        registry.registerInternalCommands()
+        val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+        val take = listOf(actionCommand("""{"name": "setSelection", "target": ${targetJson(target)}}"""))
+        val command = registry.getCommand(CommandRequest(fixture.project, "cursorless.toggleDecorations", emptyList()))!!
+        try {
+            fixture.commandExecutorService.execute(command)
+            assertFalse(HatsToggle.enabled())
+            // As in VS Code, the engine drops the hats, so a hidden hat can't be used
+            await.atMost(2, TimeUnit.SECONDS).until {
+                fixture.projectService.editorManager.getEditorHats(fixture.editor)?.isEmpty() == true
+            }
+            assertNotNull(fixture.projectService.cursorlessEngine.executeCommand(take).error)
+            // Only for this session: the setting is unchanged
+            assertTrue(TalonSettings.instance.state.enableHats)
+
+            fixture.commandExecutorService.execute(command)
+            assertTrue(HatsToggle.enabled())
+            awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+
+            val action = ActionManager.getInstance().getAction("cursorlessjetbrains.CursorlessToggle")
+            assertTrue(action is DumbAware)
+        } finally {
+            if (!HatsToggle.enabled()) HatsToggle.toggle()
         }
     }
 

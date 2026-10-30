@@ -7,6 +7,7 @@ import com.github.asoee.cursorlessjetbrains.cursorless.CursorlessEngine
 import com.github.asoee.cursorlessjetbrains.javet.JavetDriver
 import com.github.asoee.cursorlessjetbrains.javet.JavetDriverRestartListener
 import com.github.asoee.cursorlessjetbrains.listeners.*
+import com.github.asoee.cursorlessjetbrains.settings.HatsToggle
 import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -189,8 +190,15 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
         updateCursorlessEngineSettings(settings)
     }
 
+    /** Hides or shows the hats and, as in VS Code, has the engine drop or reallocate them, so hidden hats can't be used */
+    fun hatsToggled(enabled: Boolean) {
+        editorManager.setHatsEnabled(enabled)
+        cursorlessEngine.setHatsEnabled(enabled)
+    }
+
     private fun updateCursorlessEngineSettings(settings: TalonSettings.State) {
         cursorlessEngine.setConfiguration(commandHistory = settings.commandHistory, debug = settings.debugLogging)
+        cursorlessEngine.setHatsEnabled(HatsToggle.enabled(settings))
 
         val enabledShapes = settings.hatShapeSettings
             .filter { it.enabled }

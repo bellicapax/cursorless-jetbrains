@@ -81,6 +81,10 @@ class CursorlessEngine(private val driver: JavetDriver) {
         driver.talonSpokenFormsChanged()
     }
 
+    fun setHatsEnabled(enabled: Boolean) {
+        driver.setHatsEnabled(enabled)
+    }
+
     fun setEnabledHatShapes(enabledHatShapes: List<String>) {
         driver.setEnabledHatShapes(enabledHatShapes)
     }
