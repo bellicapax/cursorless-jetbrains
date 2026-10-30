@@ -703,6 +703,23 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    /** VS Code's hat toggle: with the hats off, the engine allocates none, so a hat can't be used while hidden */
+    @Synchronized
+    fun setHatsEnabled(enabled: Boolean) {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   if (plugin && plugin.hats.isEnabled !== $enabled) {
+            |     plugin.hats.toggle($enabled);
+            |   }
+            | })();
+            | """.trimMargin()
+
+        runtime.getExecutor(js)
+            .executeVoid()
+        eventLoop.await()
+    }
+
     @Synchronized
     fun setEnabledHatShapes(enabledHatShapes: List<String>) {
         val js = """

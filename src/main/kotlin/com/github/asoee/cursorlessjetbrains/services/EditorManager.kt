@@ -3,6 +3,7 @@ package com.github.asoee.cursorlessjetbrains.services
 import com.github.asoee.cursorlessjetbrains.commands.*
 import com.github.asoee.cursorlessjetbrains.cursorless.*
 import com.github.asoee.cursorlessjetbrains.listeners.getCursorlessContainers
+import com.github.asoee.cursorlessjetbrains.settings.HatsToggle
 import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
 import com.github.asoee.cursorlessjetbrains.sync.EditorState
 import com.github.asoee.cursorlessjetbrains.sync.HatRange
@@ -734,10 +735,8 @@ class EditorManager(
             val editor = it.editor
             val editorId = editorIds[editor]
             if (editorId != null) {
-                val format = editorToFormat[editorId]
-                if (format != null) {
-                    it.updateHats(format)
-                }
+                // An editor the update leaves out has no hats now, e.g. once the hats are toggled off
+                it.updateHats(editorToFormat[editorId] ?: HatsFormat())
             }
         }
     }
@@ -767,9 +766,18 @@ class EditorManager(
     }
 
     fun settingsUpdated(settings: TalonSettings.State) {
-        this.hatsEnabled = settings.enableHats
+        this.hatsEnabled = HatsToggle.enabled(settings)
         getCursorlessContainers().forEach {
             applySettingsToContainer(it, settings)
+        }
+    }
+
+    /** The hats were toggled for this session */
+    fun setHatsEnabled(enabled: Boolean) {
+        this.hatsEnabled = enabled
+        getCursorlessContainers().forEach {
+            it.setHatsEnabled(enabled)
+            it.repaint()
         }
     }
 
@@ -777,7 +785,7 @@ class EditorManager(
         it: CursorlessContainer,
         settings: TalonSettings.State
     ) {
-        it.setHatsEnabled(settings.enableHats)
+        it.setHatsEnabled(HatsToggle.enabled(settings))
         it.setHatScaleFactor(settings.hatScaleFactor)
         it.setHatVerticalOffset(settings.hatVerticalOffset)
     }

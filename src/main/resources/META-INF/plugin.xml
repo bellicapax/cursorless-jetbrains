@@ -54,8 +54,8 @@
 
         <action id="cursorlessjetbrains.CursorlessToggle"
                 class="com.github.asoee.cursorlessjetbrains.action.CursorlessToggleCommand"
-                text="Cursorless Toggle"
-                description="Toggle cursorless hats"/>
+                text="Cursorless: Toggle Hats"
+                description="Turn the Cursorless hats off in every editor, or back on"/>
 
         <!-- Cursorless's git actions ("git stage", "git unstage", "git accept"), on the caret or selection -->
         <action id="Cursorless.GitStageFile" class="com.github.asoee.cursorlessjetbrains.action.GitStageFileAction"
