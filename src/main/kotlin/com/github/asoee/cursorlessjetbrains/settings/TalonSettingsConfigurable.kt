@@ -154,11 +154,14 @@ internal class TalonSettingsConfigurable : BoundConfigurable(DISPLAY_NAME, ID) {
     }
 
     override fun apply() {
+        val settings = TalonSettings.instance
+        val wasSyncing = settings.state.syncHatsFromVscode
         super.apply()
 
-        val settings = TalonSettings.instance
         settings.fireSettingsChanged()
-        if (settings.state.syncHatsFromVscode) {
+        // Sync straight away only when syncing was just turned on: otherwise every Apply would replace the hat
+        // changes made here within seconds, rather than when settings.json next changes
+        if (settings.state.syncHatsFromVscode && !wasSyncing) {
             service<VscodeHatSync>().resync()
         }
     }

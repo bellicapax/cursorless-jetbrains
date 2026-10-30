@@ -1,5 +1,8 @@
 package com.github.asoee.cursorlessjetbrains.settings
 
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -47,11 +50,9 @@ class VscodeHatSync : Disposable {
             }
             val path = settingsPath() ?: return
             val modified = Files.getLastModifiedTime(path).toMillis()
-            if (path == lastPath && modified == lastModified) {
+            if (!markRead(path, modified)) {
                 return
             }
-            lastPath = path
-            lastModified = modified
 
             val hats = parseHatSettings(Files.readString(path))
             ApplicationManager.getApplication().invokeLater {
@@ -59,11 +60,37 @@ class VscodeHatSync : Disposable {
                 if (applyHatSettings(hats, settings.state)) {
                     logger.info("Hat enablement updated from $path")
                     settings.fireSettingsChanged()
+                    notifyUpdated(path)
                 }
             }
         } catch (e: Exception) {
             logger.warn("Could not read hat settings from VS Code's settings.json", e)
         }
+    }
+
+    /** Records [path] at [modified] as read; false if it already was */
+    @Synchronized
+    private fun markRead(path: Path, modified: Long): Boolean {
+        if (path == lastPath && modified == lastModified) {
+            return false
+        }
+        lastPath = path
+        lastModified = modified
+        return true
+    }
+
+    /** Says the hats changed, so they don't seem to change by themselves (e.g. the first sync after an update) */
+    private fun notifyUpdated(path: Path) {
+        NotificationGroupManager.getInstance().getNotificationGroup("Cursorless")
+            .createNotification(
+                "Cursorless hats updated from VS Code",
+                "The enabled hat colors and shapes now match $path, which Talon uses for its spoken forms.",
+                NotificationType.INFORMATION,
+            )
+            .addAction(NotificationAction.createSimpleExpiring("Stop syncing") {
+                TalonSettings.instance.state.syncHatsFromVscode = false
+            })
+            .notify(null)
     }
 
     /** Re-reads settings.json on the next check, even if it hasn't changed. */
