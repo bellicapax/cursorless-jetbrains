@@ -55,7 +55,12 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
+import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
+import com.github.asoee.cursorlessjetbrains.scopes.CursorlessScopeList
+import com.github.asoee.cursorlessjetbrains.scopes.ScopeListPanel
+import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
+import java.awt.Color
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import junit.framework.TestCase
@@ -835,6 +840,101 @@ class TestCursorlessActions : BasePlatformTestCase() {
         engine.hideScopeVisualizer()
 
         await.atMost(2, TimeUnit.SECONDS).until { scopeHighlighters().isEmpty() }
+    }
+
+    @Test
+    fun testScopeListShowsSupportContainmentAndTheVisualizedScope() {
+        val fixture = mainJavaFixture()
+        awaitHats(fixture, fixture.editor)
+        val engine = fixture.projectService.cursorlessEngine
+        val scopeList = fixture.project.service<CursorlessScopeList>()
+        fun function() = scopeList.list.items.firstOrNull { it.scopeType["type"]?.jsonPrimitive?.content == "namedFunction" }
+
+        // Inside doSomethingElse's body
+        runInEdtAndWait { fixture.editor.caretModel.moveToLogicalPosition(LogicalPosition(11, 12)) }
+        scopeList.setVisible(true)
+        try {
+            await.atMost(5, TimeUnit.SECONDS).until { function()?.containment == "contains" }
+            val function = function()!!
+            assertEquals("present", function.support)
+            assertTrue(function.spokenForms.toString(), function.spokenForms.isNotEmpty())
+            assertTrue(function.docsUrl, function.docsUrl.endsWith("/user/languages/java#named-function"))
+            assertTrue(scopeList.list.items.any { it.support == "unsupported" })
+
+            // The panel shows the list in its three groups
+            val panel = runInEdtAndGet { ScopeListPanel(fixture.project, testRootDisposable) }
+            runInEdtAndWait {
+                PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+                assertTrue(panel.itemsIn("present").contains(function))
+                assertEquals(scopeList.list.items.size, listOf("present", "supported", "unsupported").sumOf { panel.itemsIn(it).size })
+            }
+
+            engine.showScopeVisualizer("""{"type": "namedFunction"}""", "content")
+            await.atMost(2, TimeUnit.SECONDS).until { function()?.isVisualized == true }
+            engine.hideScopeVisualizer()
+            await.atMost(2, TimeUnit.SECONDS).until { function()?.isVisualized == false }
+        } finally {
+            scopeList.setVisible(false)
+        }
+    }
+
+    @Test
+    fun testJsHeapStaysFlatWithTheVisualizerAndScopeListOn() {
+        // The proposal's Javet heap risk: the visualizer and the Scopes list recompute on every edit, scroll and caret
+        // move. Edit, scroll and move the caret many times with both on, and check the heap doesn't keep growing
+        val fixture = mainJavaFixture()
+        awaitHats(fixture, fixture.editor)
+        val driver = fixture.projectService.jsDriver
+        val scopeList = fixture.project.service<CursorlessScopeList>()
+        runInEdtAndWait { EditorTestUtil.setEditorVisibleSize(fixture.editor, 80, 6) }
+        fixture.projectService.cursorlessEngine.showScopeVisualizer("""{"type": "namedFunction"}""", "content")
+        scopeList.setVisible(true)
+
+        fun churn(times: Int) = repeat(times) { i ->
+            runInEdtAndWait {
+                val editor = fixture.editor
+                WriteCommandAction.runWriteCommandAction(fixture.project) {
+                    val offset = editor.document.getLineEndOffset(4)
+                    editor.document.insertString(offset, " ")
+                    editor.document.deleteString(offset, offset + 1)
+                }
+                editor.caretModel.moveToLogicalPosition(LogicalPosition(4 + i % 8, 8))
+                editor.scrollingModel.scrollVertically((i % 3) * editor.lineHeight)
+                PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+            }
+        }
+        try {
+            churn(30)
+            val before = driver.usedHeapAfterGc()
+            churn(300)
+            val after = driver.usedHeapAfterGc()
+            println("JS heap with the visualizer and Scopes list on: ${before / 1024 / 1024} MB before, " +
+                "${after / 1024 / 1024} MB after 300 edits, scrolls and caret moves")
+            assertTrue("JS heap grew from $before to $after bytes", after - before < 8 * 1024 * 1024)
+        } finally {
+            scopeList.setVisible(false)
+            fixture.projectService.cursorlessEngine.hideScopeVisualizer()
+        }
+    }
+
+    @Test
+    fun testScopeVisualizerUsesTheColorsFromSettings() {
+        val fixture = mainJavaFixture()
+        awaitHats(fixture, fixture.editor)
+        val settings = TalonSettings.instance.state
+        val custom = Color(0x12, 0x34, 0x56, 0x78)
+        settings.scopeVisualizerColorSettings = TalonSettings.scopeVisualizerColorsFromDefaults().map {
+            if (it.rangeType == "content") it.copy(darkBackground = custom, lightBackground = custom) else it
+        }
+        try {
+            fixture.projectService.cursorlessEngine.showScopeVisualizer("""{"type": "namedFunction"}""", "content")
+            await.atMost(2, TimeUnit.SECONDS).until {
+                fixture.editor.markupModel.allHighlighters.any { it.getTextAttributes(null)?.backgroundColor?.rgb == custom.rgb }
+            }
+            fixture.projectService.cursorlessEngine.hideScopeVisualizer()
+        } finally {
+            settings.scopeVisualizerColorSettings = TalonSettings.scopeVisualizerColorsFromDefaults()
+        }
     }
 
     @Test

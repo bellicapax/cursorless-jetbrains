@@ -5602,6 +5602,9 @@ function camelCaseToAllDown(input2) {
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+function uriEncodeHashId(text) {
+  return camelCaseToAllDown(text).replaceAll(" ", "-").replaceAll(/[^a-z0-9-]/gu, "");
+}
 function stringToInteger(input2) {
   const trimmedValue = input2.trim();
   if (trimmedValue.length === 0) {
@@ -12794,31 +12797,31 @@ var scopeSupportFacetInfos = {
     scopeType: "pairDelimiter"
   }
 };
-function documentIter(scopeType, label) {
+function documentIter(scopeType, label2) {
   return iteration(
     scopeType,
-    label,
+    label2,
     "the entire document including leading and trailing empty lines"
   );
 }
-function classIter(scopeType, label) {
-  return iteration(scopeType, label, "class bodies");
+function classIter(scopeType, label2) {
+  return iteration(scopeType, label2, "class bodies");
 }
-function interfaceIter(scopeType, label) {
-  return iteration(scopeType, label, "interface bodies");
+function interfaceIter(scopeType, label2) {
+  return iteration(scopeType, label2, "interface bodies");
 }
-function enumIter(scopeType, label) {
-  return iteration(scopeType, label, "enum bodies");
+function enumIter(scopeType, label2) {
+  return iteration(scopeType, label2, "enum bodies");
 }
-function blockIter(scopeType, label) {
+function blockIter(scopeType, label2) {
   return iteration(
     scopeType,
-    label,
+    label2,
     "statement blocks (body of functions/if-statements/for-loops/etc)"
   );
 }
-function iteration(scopeType, label, desc) {
-  const description = desc != null ? `Iteration scope for ${label}: ${desc}.` : `Iteration scope for ${label}`;
+function iteration(scopeType, label2, desc) {
+  const description = desc != null ? `Iteration scope for ${label2}: ${desc}.` : `Iteration scope for ${label2}`;
   return {
     description,
     scopeType,
@@ -15352,6 +15355,14 @@ function serializedMarksToTokenHats(marks, editor) {
       hatRange: range3
     };
   });
+}
+
+// ../lib-common/src/util/serializeScopeType.ts
+function serializeScopeType(scopeType) {
+  if (typeof scopeType === "string") {
+    return scopeType;
+  }
+  return scopeType.type;
 }
 
 // ../lib-common/src/util/uniqWithHash.ts
@@ -37553,9 +37564,9 @@ function codePointLengthVar(doc, ctx, accessor, inDoubt) {
   doc.write(`const ${v3} = typeof ${accessor} === "string" && ${inDoubt} ? ${cpLen}(${accessor}) : ${accessor}.length;`);
   return v3;
 }
-function numericOperand(value, label) {
+function numericOperand(value, label2) {
   if (typeof value !== "number" || !Number.isFinite(value)) {
-    throw new ZodCompileUnsupportedError(`${label} bound of type ${typeof value}`);
+    throw new ZodCompileUnsupportedError(`${label2} bound of type ${typeof value}`);
   }
   return `${value}`;
 }
@@ -52738,6 +52749,8 @@ var JetbrainsPlugin = class {
     __publicField(this, "commandHistoryStorage");
     /** Set by activate, once the engine exists */
     __publicField(this, "tutorial");
+    /** Set by activate, once the engine's scope provider exists */
+    __publicField(this, "scopeList");
     this.commandHistoryStorage = new JetbrainsCommandHistoryStorage(client);
   }
   /**
@@ -52765,6 +52778,10 @@ var JetbrainsPlugin = class {
   /** "cursorless docs" opened the documentation, which a tutorial step may be waiting for */
   documentationOpened() {
     this.tutorial?.documentationOpened();
+  }
+  /** The Cursorless tool window's Scopes list came on screen or went off it */
+  setScopeListVisible(visible) {
+    this.scopeList?.setVisible(visible);
   }
   tutorialState() {
     return this.tutorial?.state ?? { type: "loading" };
@@ -57813,6 +57830,109 @@ var JetbrainsSnippets = class {
   }
 };
 
+// src/ide/JetbrainsScopeList.ts
+var SELECTION_DELAY_MS = 100;
+var JetbrainsScopeList = class {
+  constructor(ide, client, scopeProvider, scopeVisualizer) {
+    __publicField(this, "ide", ide);
+    __publicField(this, "client", client);
+    __publicField(this, "scopeProvider", scopeProvider);
+    __publicField(this, "scopeVisualizer", scopeVisualizer);
+    __publicField(this, "disposable");
+    __publicField(this, "supportLevels", []);
+    __publicField(this, "selectionTimer");
+  }
+  /** Only a list on screen is kept up to date, as in VS Code, since working out scope support isn't cheap */
+  setVisible(visible) {
+    if (!visible) {
+      this.dispose();
+      return;
+    }
+    if (this.disposable != null) {
+      this.send();
+      return;
+    }
+    this.disposable = disposableFrom(
+      // Calls back straight away with the current support
+      this.scopeProvider.onDidChangeScopeSupport((supportLevels) => {
+        this.supportLevels = supportLevels;
+        this.send();
+      }),
+      this.ide.onDidChangeTextEditorSelection(() => {
+        clearTimeout(this.selectionTimer);
+        this.selectionTimer = setTimeout(() => this.send(), SELECTION_DELAY_MS);
+      })
+    );
+  }
+  /** The visualizer started or stopped */
+  scopeTypeChanged() {
+    if (this.disposable != null) {
+      this.send();
+    }
+  }
+  dispose() {
+    clearTimeout(this.selectionTimer);
+    this.selectionTimer = void 0;
+    this.disposable?.dispose();
+    this.disposable = void 0;
+  }
+  send() {
+    const editor = this.ide.activeTextEditor;
+    const languageId = editor?.document.languageId;
+    const selection = editor != null && editor.selections.length === 1 ? editor.selections[0] : void 0;
+    const items2 = this.supportLevels.filter(
+      ({ spokenForm }) => !(spokenForm.type === "error" && spokenForm.isPrivate)
+    ).map((info2) => {
+      const support = info2.support === 0 /* supportedAndPresentInEditor */ ? "present" : info2.support === 1 /* supportedButNotPresentInEditor */ ? "supported" : "unsupported";
+      const docsLanguage = info2.isLanguageSpecific ? languageId ?? "plaintext" : "plaintext";
+      const docsId = uriEncodeHashId(serializeScopeType(info2.scopeType));
+      return {
+        scopeType: info2.scopeType,
+        support,
+        spokenForms: info2.spokenForm.type === "success" ? info2.spokenForm.spokenForms : [],
+        unspokenReason: info2.spokenForm.type === "error" ? info2.spokenForm.requiresTalonUpdate ? "requiresTalonUpdate" : "disabled" : void 0,
+        name: info2.humanReadableName,
+        isLanguageSpecific: info2.isLanguageSpecific,
+        isVisualized: isEqual_default(info2.scopeType, this.scopeVisualizer.scopeType),
+        containment: support === "present" && editor != null && selection != null ? this.containment(editor, info2.scopeType) : void 0,
+        docsUrl: `${DOCS_URL}/user/languages/${docsLanguage}#${docsId}`
+      };
+    });
+    items2.sort(compareItems);
+    this.client.scopeListChanged(JSON.stringify({ languageId, items: items2 }));
+  }
+  containment(editor, scopeType) {
+    const selection = editor.selections[0];
+    for (const scope of this.scopeProvider.provideScopeRangesForRange(
+      editor,
+      scopeType,
+      selection
+    )) {
+      for (const target of scope.targets) {
+        if (target.contentRange.isRangeEqual(selection)) {
+          return "exact";
+        }
+        if (target.contentRange.contains(selection)) {
+          return "contains";
+        }
+      }
+    }
+    return void 0;
+  }
+};
+function compareItems(a2, b2) {
+  if (a2.spokenForms.length === 0 !== (b2.spokenForms.length === 0)) {
+    return a2.spokenForms.length === 0 ? 1 : -1;
+  }
+  if (a2.isLanguageSpecific !== b2.isLanguageSpecific) {
+    return a2.isLanguageSpecific ? -1 : 1;
+  }
+  return label(a2).localeCompare(label(b2));
+}
+function label(item2) {
+  return item2.spokenForms.length === 0 ? "-" : item2.spokenForms.map((spokenForm) => `"${spokenForm}"`).join(" | ");
+}
+
 // src/ide/JetbrainsScopeVisualizer.ts
 var JetbrainsScopeVisualizer = class {
   constructor(client, scopeProvider) {
@@ -57821,11 +57941,14 @@ var JetbrainsScopeVisualizer = class {
     __publicField(this, "listener");
     __publicField(this, "highlightIds", []);
     __publicField(this, "renderedEditorIds", /* @__PURE__ */ new Set());
+    /** The scope type shown, if any */
+    __publicField(this, "scopeType");
     /** Called with the scope type shown, or undefined when hidden, so the tutorial can wait for "visualize" */
     __publicField(this, "onDidChangeScopeType");
   }
   start(scopeType, visualizationType) {
     this.stop();
+    this.scopeType = scopeType;
     this.onDidChangeScopeType?.(scopeType);
     const nestedId = `scopeVisualizer.${visualizationType}`;
     this.highlightIds = [
@@ -57858,6 +57981,7 @@ var JetbrainsScopeVisualizer = class {
     );
   }
   stop() {
+    this.scopeType = void 0;
     if (this.listener != null) {
       this.onDidChangeScopeType?.(void 0);
     }
@@ -58774,8 +58898,18 @@ async function activate(plugin, wasmDirectory) {
   tutorial.onState(
     (state) => plugin.client.tutorialStateChanged(JSON.stringify(state))
   );
-  plugin.scopeVisualizer.onDidChangeScopeType = (scopeType) => tutorial.scopeTypeVisualized(scopeType);
+  const scopeList = new JetbrainsScopeList(
+    plugin.ide,
+    plugin.client,
+    engine.scopeProvider,
+    plugin.scopeVisualizer
+  );
+  plugin.scopeVisualizer.onDidChangeScopeType = (scopeType) => {
+    tutorial.scopeTypeVisualized(scopeType);
+    scopeList.scopeTypeChanged();
+  };
   plugin.tutorial = tutorial;
+  plugin.scopeList = scopeList;
   console.log("activate completed");
   return engine;
 }

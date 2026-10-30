@@ -18,7 +18,7 @@ class ShowSidebarCommand(project: Project) : VcCommand(project) {
     }
 
     override fun execute(context: CommandContext): String {
-        project.service<CursorlessTutorial>().reveal()
+        project.service<CursorlessTutorial>().reveal(showTutorial = false)
         return "OK"
     }
 }

@@ -2,6 +2,8 @@ package com.github.asoee.cursorlessjetbrains.tutorial
 
 import com.github.asoee.cursorlessjetbrains.commands.CommandExecutorService
 import com.github.asoee.cursorlessjetbrains.commands.TutorialCommand
+import com.github.asoee.cursorlessjetbrains.scopes.CursorlessScopeList
+import com.github.asoee.cursorlessjetbrains.scopes.ScopeListPanel
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -11,9 +13,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefBrowserBase
@@ -30,8 +37,9 @@ import javax.swing.SwingUtilities
 import javax.swing.Timer
 
 /**
- * The Cursorless tool window: the VS Code extension's tutorial webview, bundled as-is, in JCEF. A small shim stands in
- * for VS Code's webview API: the page's messages come here, and tutorial states go back with window.postMessage.
+ * The Cursorless tool window, VS Code's Cursorless sidebar: the tutorial and the Scopes list, each in a tab. The
+ * tutorial is the VS Code extension's tutorial webview, bundled as-is, in JCEF. A small shim stands in for VS Code's
+ * webview API: the page's messages come here, and tutorial states go back with window.postMessage.
  */
 class CursorlessToolWindowFactory : ToolWindowFactory, DumbAware {
 
@@ -41,8 +49,27 @@ class CursorlessToolWindowFactory : ToolWindowFactory, DumbAware {
         } else {
             JBLabel("The Cursorless tutorial needs JCEF, which this IDE doesn't support", SwingConstants.CENTER)
         }
-        val content = ContentFactory.getInstance().createContent(component, null, false)
-        toolWindow.contentManager.addContent(content)
+        val contentFactory = ContentFactory.getInstance()
+        toolWindow.contentManager.addContent(contentFactory.createContent(component, CursorlessTutorial.TUTORIAL_TAB, false))
+        val scopes = contentFactory.createContent(ScopeListPanel(project, toolWindow.disposable), SCOPES_TAB, false)
+        toolWindow.contentManager.addContent(scopes)
+        watchScopesVisibility(project, toolWindow, scopes)
+    }
+
+    /** The engine keeps the Scopes list up to date only while it's on screen */
+    private fun watchScopesVisibility(project: Project, toolWindow: ToolWindow, scopes: Content) {
+        val scopeList = project.service<CursorlessScopeList>()
+        fun update() = scopeList.setVisible(toolWindow.isVisible && scopes.isSelected)
+
+        toolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
+            override fun selectionChanged(event: ContentManagerEvent) = update()
+        })
+        project.messageBus.connect(toolWindow.disposable)
+            .subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+                override fun stateChanged(toolWindowManager: ToolWindowManager) = update()
+            })
+        Disposer.register(toolWindow.disposable) { scopeList.setVisible(false) }
+        update()
     }
 
     private fun createBrowser(project: Project, toolWindow: ToolWindow): JBCefBrowser {
@@ -143,4 +170,8 @@ class CursorlessToolWindowFactory : ToolWindowFactory, DumbAware {
             ?: throw IllegalStateException("Tutorial webview $name missing from the plugin")
 
     private fun css(color: Color) = "#%02x%02x%02x".format(color.red, color.green, color.blue)
+
+    companion object {
+        const val SCOPES_TAB = "Scopes"
+    }
 }

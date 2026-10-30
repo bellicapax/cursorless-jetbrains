@@ -11,6 +11,7 @@ import com.github.asoee.cursorlessjetbrains.settings.TalonSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.github.asoee.cursorlessjetbrains.scopes.CursorlessScopeList
 import com.github.asoee.cursorlessjetbrains.tutorial.CursorlessTutorial
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
@@ -62,6 +63,7 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
         this.cursorlessEngine = engine
         this.editorManager = EditorManager(cursorlessEngine, this, cs)
         this.editorManager.tutorialStateListener = { project.service<CursorlessTutorial>().stateChanged(it) }
+        this.editorManager.scopeListListener = { project.service<CursorlessScopeList>().changed(it) }
         this.focusChangeListener = TalonFocusChangeListener(editorManager, project)
 
         // https://intellij-support.jetbrains.com/hc/en-us/community/posts/4578776718354-How-do-I-listen-for-editor-focus-events-
@@ -91,6 +93,7 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
         logger.info("reloading all")
         this.editorManager.reloadAllEditors()
         logger.info("reloaded all")
+        project.service<CursorlessScopeList>().engineStarted()
     }
 
     private fun createV8EngineAndCursorless(): Pair<JavetDriver, CursorlessEngine> {
@@ -230,11 +233,11 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
             editorManager.updateEngine(cursorlessEngine)
 
             settingsUpdated(TalonSettings.instance.state)
-        // The engine set its first tutorial state while starting, before the listener above existed
-        cursorlessEngine.tutorialState()?.let { project.service<CursorlessTutorial>().stateChanged(it) }
+            cursorlessEngine.tutorialState()?.let { project.service<CursorlessTutorial>().stateChanged(it) }
 
             logger.info("Reloading all editors after V8 restart...")
             editorManager.reloadAllEditors()
+            project.service<CursorlessScopeList>().engineStarted()
 
             logger.warn("V8 engine successfully restarted")
         } catch (e: Exception) {

@@ -49,6 +49,10 @@ class CursorlessEngine(private val driver: JavetDriver) {
         return driver.tutorialState()
     }
 
+    fun setScopeListVisible(visible: Boolean) {
+        driver.setScopeListVisible(visible)
+    }
+
     fun tutorialCommand(method: String, argJson: String? = null) {
         driver.tutorialCommand(method, argJson)
     }
