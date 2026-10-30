@@ -53,6 +53,14 @@ open class JavetDriver {
         val nodeOptions = NodeRuntimeOptions().apply {
             setConsoleArguments(arrayOf("--experimental-vm-modules"))
         }
+        // Compile WebAssembly with V8's baseline compiler only: optimizing the tree-sitter Swift parser (from
+        // @cursorless/tree-sitter-wasms 0.12) ran out of V8's compile memory ("Fatal process out of memory: Zone"),
+        // which kills the whole IDE process. --no-wasm-tier-up wasn't enough, as V8 still falls back to optimizing
+        // functions the baseline compiler can't handle. V8 takes flags only until its first runtime is created
+        val v8Flags = NodeRuntimeOptions.V8_FLAGS
+        if (!v8Flags.isSealed) {
+            v8Flags.customFlags = listOfNotNull(v8Flags.customFlags, "--liftoff-only").joinToString(" ")
+        }
         runtime = V8Host.getNodeI18nInstance()
             .createV8Runtime(nodeOptions)
         runtime.setV8ModuleResolver(JavetBuiltInModuleResolver())

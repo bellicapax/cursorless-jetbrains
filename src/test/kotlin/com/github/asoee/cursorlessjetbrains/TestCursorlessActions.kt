@@ -13,6 +13,12 @@ import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonArray
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import java.io.File
+import com.intellij.openapi.vfs.ReadonlyStatusHandler
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
 import com.intellij.find.EditorSearchSession
 import com.intellij.notification.Notifications
 import com.intellij.notification.Notification
@@ -519,6 +525,64 @@ class TestCursorlessActions : BasePlatformTestCase() {
 
 
     @Test
+    fun testPourIndentsWhereTheIdeHasNoIndenter() {
+        // Regression: in Rider, C++ indenting is in the backend, so "pour" left the new line unindented. Java has no
+        // indenter in these tests either: the new line takes the line above's indentation, one level more after "{"
+        val fixture = mainJavaFixture()
+        val pour = { line: Int, startColumn: Int, endColumn: Int ->
+            val target = awaitTargetForRange(
+                fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, line, startColumn, line, endColumn)
+            )
+            val result = fixture.projectService.cursorlessEngine.executeCommand(
+                listOf(actionCommand("""{"name": "editNewLineAfter", "target": ${targetJson(target)}}"""))
+            )
+            assertNull(result.error)
+        }
+
+        // "for (int i = 1; i <= 5; i++) {"
+        pour(5, 8, 11)
+        runInEdtAndWait {
+            assertEquals(" ".repeat(12), getTextFromLine(fixture.editor, 6))
+            assertEquals(LogicalPosition(6, 12), fixture.editor.caretModel.logicalPosition)
+        }
+
+        // "System.out.println(...);"
+        pour(4, 8, 14)
+        runInEdtAndWait {
+            assertEquals(" ".repeat(8), getTextFromLine(fixture.editor, 5))
+            assertEquals(LogicalPosition(5, 8), fixture.editor.caretModel.logicalPosition)
+        }
+    }
+
+    @Test
+    fun testPourChecksOutAReadOnlyFile() {
+        // Regression: "pour" (the IDE inserting the line) edited a not-checked-out Perforce file directly and failed
+        // with "Attempt to modify read-only document"; it must run the IDE's checkout first, as other edits do
+        val fixture = mainJavaFixture()
+        val readonlyHandler = ReadonlyStatusHandler.getInstance(fixture.project) as ReadonlyStatusHandlerImpl
+        readonlyHandler.setClearReadOnlyInTests(true)
+        try {
+            runInEdtAndWait {
+                WriteAction.runAndWait<Throwable> { fixture.psiFile.virtualFile.isWritable = false }
+            }
+            val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
+            val linesBefore = fixture.editor.document.lineCount
+
+            val result = fixture.projectService.cursorlessEngine.executeCommand(
+                listOf(actionCommand("""{"name": "editNewLineAfter", "target": ${targetJson(target)}}"""))
+            )
+
+            assertNull(result.error)
+            runInEdtAndWait {
+                assertTrue(fixture.psiFile.virtualFile.isWritable)
+                assertEquals(linesBefore + 1, fixture.editor.document.lineCount)
+            }
+        } finally {
+            readonlyHandler.setClearReadOnlyInTests(false)
+        }
+    }
+
+    @Test
     fun testGetText() {
         val fixture = mainJavaFixture()
 //      target the main method, expect a default hat over 'm'
@@ -627,6 +691,87 @@ class TestCursorlessActions : BasePlatformTestCase() {
                 listOf(actionCommand("""{"name": "$action", "target": ${targetJson(target)}}"""))
             )
             assertTrue("$action failed: ${res.error}", res.success)
+        }
+    }
+
+    @Test
+    fun testEveryIdeActionTheEngineRunsExists() {
+        // A wrong action id only logs a warning when run, so check the ids the bundled engine uses against the IDE
+        val engine = javaClass.getResource("/cursorless/cursorless.js")!!.readText()
+        val actionIds = Regex("""new JetbrainsEditorCommand\([^;]*?"([A-Za-z][\w.$]*)"\s*\)""")
+            .findAll(engine).map { it.groupValues[1] }.toSet()
+
+        assertTrue("found only $actionIds", actionIds.size >= 10)
+        val missing = actionIds.filter { ActionManager.getInstance().getAction(it) == null }
+        assertEquals(emptyList<String>(), missing)
+    }
+
+    @Test
+    fun testGitStageUnstageAndAcceptThroughCursorless() {
+        val fixture = mainJavaFixture()
+        val repo = Files.createTempDirectory("cursorless-git").toFile()
+        fun git(vararg args: String): String {
+            val process = ProcessBuilder(listOf("git") + args).directory(repo).redirectErrorStream(true).start()
+            val output = process.inputStream.bufferedReader().readText()
+            assertEquals("git ${args.joinToString(" ")}: $output", 0, process.waitFor())
+            return output
+        }
+        git("init", "-q")
+        git("config", "user.email", "test@example.com")
+        git("config", "user.name", "Test")
+        git("config", "core.autocrlf", "false")
+        val file = File(repo, "notes.txt")
+        file.writeText(listOf("one", "two", "three", "four", "five").joinToString("\n", postfix = "\n"))
+        git("add", "notes.txt")
+        git("commit", "-q", "-m", "first")
+        // Two separate changes: line 1 edited, and a line added after "four"
+        file.writeText(listOf("one", "alpha", "three", "four", "bravo", "five").joinToString("\n", postfix = "\n"))
+
+        VfsRootAccess.allowRootAccess(testRootDisposable, repo.path)
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+        var editor: Editor? = null
+        runInEdtAndWait {
+            editor = FileEditorManager.getInstance(fixture.project).openTextEditor(OpenFileDescriptor(fixture.project, virtualFile), true)
+        }
+        val alpha = awaitTargetForRange(fixture, editor!!, CursorlessRange.fromLogicalPositions(editor!!, 1, 0, 1, 5))
+        fun say(action: String, target: String) {
+            val result = fixture.projectService.cursorlessEngine.executeCommand(
+                listOf(actionCommand("""{"name": "$action", "target": $target}"""))
+            )
+            assertNull(result.error)
+        }
+
+        // "git stage" on a line stages only that line's change
+        say("gitStage", targetJson(alpha))
+        val staged = git("diff", "--cached")
+        assertTrue(staged, staged.contains("+alpha"))
+        assertFalse(staged, staged.contains("bravo"))
+
+        say("gitUnstage", targetJson(alpha))
+        assertEquals("", git("diff", "--cached"))
+
+        // "git revert" on a line puts only that line back to its staged version
+        say("gitRevert", targetJson(alpha))
+        runInEdtAndWait {
+            assertEquals(listOf("one", "two", "three", "four", "bravo", "five").joinToString("\n", postfix = "\n"), editor!!.document.text)
+        }
+
+        // "git stage" on the whole file stages what's left
+        val one = awaitTargetForRange(fixture, editor!!, CursorlessRange.fromLogicalPositions(editor!!, 0, 0, 0, 3))
+        val wholeFile = targetJson(one).removeSuffix("}") +
+            """, "modifiers": [{"type": "containingScope", "scopeType": {"type": "document"}}]}"""
+        say("gitStage", wholeFile)
+        val all = git("diff", "--cached")
+        assertTrue(all, all.contains("+bravo") && !all.contains("alpha"))
+
+        // "git accept" keeps the side of a conflict the target is in
+        WriteCommandAction.runWriteCommandAction(fixture.project) {
+            editor!!.document.setText(listOf("<<<<<<< HEAD", "mine", "=======", "theirs", ">>>>>>> feature", "end").joinToString("\n"))
+        }
+        val theirs = awaitTargetForRange(fixture, editor!!, CursorlessRange.fromLogicalPositions(editor!!, 3, 0, 3, 6))
+        say("gitAccept", targetJson(theirs))
+        runInEdtAndWait {
+            assertEquals("theirs\nend", editor!!.document.text)
         }
     }
 
@@ -1043,6 +1188,41 @@ class TestCursorlessActions : BasePlatformTestCase() {
         val caret = json["selections"]!!.jsonArray.single().jsonObject["active"]!!.jsonObject
         assertEquals(5, caret["line"]!!.jsonPrimitive.int)
         assertEquals(8, caret["column"]!!.jsonPrimitive.int)
+    }
+
+    @Test
+    fun testEditorStateCarriesTheFilesIndentSettings() {
+        // The engine indents with these (e.g. new lines, snippets); it used to assume 4 spaces everywhere
+        val fixture = mainJavaFixture()
+        runInEdtAndWait {
+            fixture.editor.settings.setUseTabCharacter(true)
+            fixture.editor.settings.setTabSize(8)
+            val state = fixture.projectService.editorManager.editorStateNow(fixture.editor)
+            assertEquals(8, state.tabSize)
+            assertEquals(false, state.insertSpaces)
+        }
+    }
+
+    @Test
+    fun testFollowOnAUrlOpensItInTheBrowser() {
+        // As VS Code's openLink does; following anything else still goes to its declaration
+        val fixture = mainJavaFixture()
+        val opened = mutableListOf<String>()
+        fixture.projectService.editorManager.urlOpener = { opened.add(it) }
+        val document = fixture.editor.document
+        WriteCommandAction.runWriteCommandAction(fixture.project) {
+            document.insertString(0, "// See https://example.com/docs.\n")
+        }
+        val column = document.getText().indexOf("example")
+        val target = awaitTargetForRange(
+            fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 0, column, 0, column + 7)
+        )
+
+        val result = fixture.projectService.cursorlessEngine.executeCommand(CursorlessCommand.follow(target))
+
+        assertNull(result.error)
+        // The sentence's full stop isn't part of the link
+        assertEquals(listOf("https://example.com/docs"), opened)
     }
 
     @Test

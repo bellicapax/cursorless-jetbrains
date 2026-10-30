@@ -69,6 +69,14 @@ class IdeClientCallback {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
 
+        override fun revealRange(editorId: String, range: CursorlessRange) {
+            println("ASOEE/PLUGIN: CursorlessCallback not set")
+        }
+
+        override fun openUrl(url: String) {
+            println("ASOEE/PLUGIN: CursorlessCallback not set")
+        }
+
         override fun flashRanges(flashRanges: Array<CursorlessFlashRange>) {
             println("ASOEE/PLUGIN: CursorlessCallback not set")
         }
@@ -217,6 +225,18 @@ class IdeClientCallback {
     fun revealLine(editorId: String, line: Int, revealAt: String) {
         logger.info("IdeClientCallback.revealLine: $line")
         cursorlessCallback.revealLine(editorId, line, revealAt)
+    }
+
+    @V8Function
+    fun revealRange(editorId: String, rangeJson: String) {
+        val range = Json { ignoreUnknownKeys = true }.decodeFromString<CursorlessRange>(rangeJson)
+        cursorlessCallback.revealRange(editorId, range)
+    }
+
+    @V8Function
+    fun openUrl(url: String) {
+        logger.info("IdeClientCallback.openUrl: $url")
+        cursorlessCallback.openUrl(url)
     }
 
 

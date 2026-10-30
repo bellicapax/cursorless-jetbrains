@@ -19,6 +19,8 @@ interface CursorlessCallback {
     /** Runs it in the IDE; returns JSON {changes, selections}: the edits it made and the carets after, or null */
     fun executeRangeCommand(editorId: String, rangeCommand: CursorlessEditorCommand): String?
     fun revealLine(editorId: String, line: Int, revealAt: String)
+    fun revealRange(editorId: String, range: CursorlessRange)
+    fun openUrl(url: String)
     fun flashRanges(flashRanges: Array<CursorlessFlashRange>)
     fun setHighlightRanges(highlightId: String?, editorId: String, ranges: Array<CursorlessGeneralizedRange>)
     fun prePhraseVersion(): String?
