@@ -5,6 +5,8 @@
     <vendor>asoee</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <!-- The terminal's shell, for editing keys sent to it; without the Terminal plugin the rest still loads -->
+    <depends optional="true" config-file="cursorless-terminal.xml">org.jetbrains.plugins.terminal</depends>
 
     <resource-bundle>messages.MyBundle</resource-bundle>
 
