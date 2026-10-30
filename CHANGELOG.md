@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### Added
+
+- Cursorless tutorial and a Cursorless tool window with Tutorial and Scopes tabs
+- Scope visualizer (`visualize <scope> [removal | iteration]`), with colours you can set in Settings
+- Scopes list, as in VS Code: the scopes present, supported and unsupported in the active editor
+- Cheat sheet and `cursorless stats`
+- Custom IDE commands, hover, breakpoint, scout, focus, snippets and the engine's fallback
+- Git actions: stage and unstage files or lines, revert lines, accept a side of a merge conflict
+- Hat shapes and colours synced from VS Code's settings
+- "Cursorless: Toggle Hats" action and `cursorless.toggleDecorations`, which also stops the engine allocating hats
+- Indentation settings, extra language mappings and tree-sitter parsers
+
+### Changed
+
+- Updated the embedded Cursorless engine to upstream main
+- Talon's IDE actions run in the focused component; terminal edits go to the shell
+- Engine messages are shown as notifications
+
+### Fixed
+
+- Read-only files (e.g. Perforce) are checked out before Cursorless edits them
+- Results return to Talon as JSON again
+- Undo, flashes, `give` and hover in Rider
+- `pour` indents the new line in Rider, where the IDE has no indenter for C++ and C#
+- Deadlocks between the scope visualizer and the IDE; every engine call now holds the engine lock
+
 ## [0.1.3] - 2026-09-25
 
 - Fix release workflow: merge changelog/version bump via PR (#178) @asoee
