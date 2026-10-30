@@ -864,7 +864,8 @@ class TestCursorlessActions : BasePlatformTestCase() {
     fun testSnipMakeOpensNewSnippetFile() {
         val fixture = mainJavaFixture()
         val target = awaitTargetForRange(fixture, fixture.editor, CursorlessRange.fromLogicalPositions(fixture.editor, 4, 19, 4, 26))
-        val snippetsDir = Files.createTempDirectory("cursorless-snippets")
+        // The real path: on macOS the temp folder is a symlink (/var -> /private/var), and the VFS uses the target
+        val snippetsDir = Files.createTempDirectory("cursorless-snippets").toRealPath()
         VfsRootAccess.allowRootAccess(myFixture.testRootDisposable, snippetsDir.toString())
 
         // With snippetName given, the engine skips the name prompt
