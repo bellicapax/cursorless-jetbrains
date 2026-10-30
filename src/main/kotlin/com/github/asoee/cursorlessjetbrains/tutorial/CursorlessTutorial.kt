@@ -15,6 +15,7 @@ class CursorlessTutorial(private val project: Project) {
 
     companion object {
         const val TOOL_WINDOW_ID = "Cursorless"
+        const val TUTORIAL_TAB = "Tutorial"
     }
 
     @Volatile
@@ -33,10 +34,17 @@ class CursorlessTutorial(private val project: Project) {
         return { listeners.remove(listener) }
     }
 
-    /** Shows the Cursorless tool window without taking focus, as VS Code reveals its tutorial view */
-    fun reveal() {
+    /**
+     * Shows the Cursorless tool window without taking focus, as VS Code reveals its sidebar; with [showTutorial], on
+     * the tutorial's tab
+     */
+    fun reveal(showTutorial: Boolean = true) {
         ApplicationManager.getApplication().invokeLater({
-            ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID)?.show()
+            val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID) ?: return@invokeLater
+            toolWindow.show()
+            if (showTutorial) {
+                toolWindow.contentManager.findContent(TUTORIAL_TAB)?.let { toolWindow.contentManager.setSelectedContent(it) }
+            }
         }, project.disposed)
     }
 }

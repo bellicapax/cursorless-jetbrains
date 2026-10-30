@@ -25,6 +25,7 @@ internal class TalonSettingsConfigurable : BoundConfigurable(DISPLAY_NAME, ID) {
 
         val shapeSettingsTable = ShapeSettingsTable(shapeSettingsModel)
         val colorSettingsTable = ColorSettingsTable(colorSettingsModel)
+        val scopeVisualizerColorTable = ScopeVisualizerColorTable()
 
         return panel {
             group("General") {
@@ -104,6 +105,21 @@ internal class TalonSettingsConfigurable : BoundConfigurable(DISPLAY_NAME, ID) {
                             { table -> table.getValue() },
                             { table, value -> table.setValue(value) },
                             settings.state::hatColorSettings.toMutableProperty()
+                        )
+                }
+            }
+            group("Scope visualizer") {
+                row {
+                    label("Colors for \"visualize <scope>\"")
+                        .comment("As VS Code's cursorless.scopeVisualizer.colors: the IDE uses the dark or light ones to match its theme")
+                }
+                row {
+                    cell(scopeVisualizerColorTable)
+                        .align(Align.FILL)
+                        .bind(
+                            { table -> table.getValue() },
+                            { table, value -> table.setValue(value) },
+                            settings.state::scopeVisualizerColorSettings.toMutableProperty()
                         )
                 }
             }

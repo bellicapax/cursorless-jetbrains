@@ -38,4 +38,5 @@ interface CursorlessCallback {
     fun openUntitledTextDocument(content: String, language: String?): String
     fun showMessage(type: String, id: String, message: String)
     fun tutorialStateChanged(stateJson: String)
+    fun scopeListChanged(scopeListJson: String)
 }

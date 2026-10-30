@@ -145,6 +145,9 @@ class IdeClientCallback {
         override fun tutorialStateChanged(stateJson: String) {
         }
 
+        override fun scopeListChanged(scopeListJson: String) {
+        }
+
     }
 
 
@@ -335,6 +338,11 @@ class IdeClientCallback {
     @V8Function
     fun tutorialStateChanged(stateJson: String) {
         cursorlessCallback.tutorialStateChanged(stateJson)
+    }
+
+    @V8Function
+    fun scopeListChanged(scopeListJson: String) {
+        cursorlessCallback.scopeListChanged(scopeListJson)
     }
 
     @V8Function

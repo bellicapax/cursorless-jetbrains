@@ -190,6 +190,8 @@ class EditorManager(
     /** Receives the engine's tutorial state, for the Cursorless tool window */
     var tutorialStateListener: ((String) -> Unit)? = null
 
+    var scopeListListener: ((String) -> Unit)? = null
+
     // Replaceable so tests don't open a browser
     internal var urlOpener: (String) -> Unit = { BrowserUtil.browse(it) }
 
@@ -678,6 +680,10 @@ class EditorManager(
 
         override fun tutorialStateChanged(stateJson: String) {
             editorManager.tutorialStateListener?.invoke(stateJson)
+        }
+
+        override fun scopeListChanged(scopeListJson: String) {
+            editorManager.scopeListListener?.invoke(scopeListJson)
         }
 
         override fun showMessage(type: String, id: String, message: String) {

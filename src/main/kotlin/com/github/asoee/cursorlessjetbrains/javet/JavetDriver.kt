@@ -636,6 +636,21 @@ open class JavetDriver {
         return result?.toString()
     }
 
+    /** The Cursorless tool window's Scopes list came on screen or went off it; the engine sends it only while shown */
+    @Synchronized
+    fun setScopeListVisible(visible: Boolean) {
+        val js = """
+            | (async () => {
+            |   const plugin = await globalThis.plugin;
+            |   plugin?.setScopeListVisible($visible);
+            | })();
+            | """.trimMargin()
+
+        runtime.getExecutor(js)
+            .executeVoid()
+        eventLoop.await()
+    }
+
     @Synchronized
     fun updateConfiguration(configuration: CursorlessConfiguration) {
         val js = """
@@ -782,6 +797,13 @@ open class JavetDriver {
 
     fun gc() {
         runtime.lowMemoryNotification()
+    }
+
+    /** The JS heap in use after a full garbage collection, in bytes */
+    @Synchronized
+    fun usedHeapAfterGc(): Long {
+        runtime.lowMemoryNotification()
+        return runtime.getV8HeapStatistics().join().usedHeapSize
     }
 
 }

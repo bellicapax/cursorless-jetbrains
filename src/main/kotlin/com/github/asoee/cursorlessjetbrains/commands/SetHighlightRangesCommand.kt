@@ -36,21 +36,26 @@ class SetHighlightRangesCommand(
             null to Color(0x8c, 0x00, 0xff, 0x86)  // Default to purple
         )
 
-        // Scope visualizer ("visualize funk"): VS Code's default colors, background plus a solid border
-        private val SCOPE_VISUALIZER_COLORS = mapOf(
-            "scopeVisualizer.domain" to Pair(
-                Color(0x00, 0xe1, 0xff, 0x18),
-                JBColor(Color(0x19, 0x17, 0x19, 0x84), Color(0xeb, 0xde, 0xec, 0x84))
-            ),
-            "scopeVisualizer.content" to Pair(Color(0xad, 0x00, 0xbc, 0x5b), Color(0xee, 0x00, 0xff, 0x78)),
-            "scopeVisualizer.removal" to Pair(Color(0xff, 0x00, 0x00, 0x2d), Color(0xff, 0x00, 0x00, 0x78)),
-            "scopeVisualizer.iteration" to Pair(Color(0x00, 0x72, 0x5f, 0x6c), Color(0x00, 0xff, 0xd5, 0x78)),
-        )
+        /**
+         * The scope visualizer's colors ("visualize funk") from the settings page, background plus a solid border, in
+         * the dark or light variant to match the theme
+         */
+        private fun scopeVisualizerColors(highlightId: String?): Pair<Color, Color>? {
+            if (highlightId == null || !highlightId.startsWith("scopeVisualizer.")) return null
+            // A domain that equals its nested range is drawn in the nested range's colors
+            val rangeType = highlightId.removePrefix("scopeVisualizer.").removeSuffix(".equalsDomain")
+            val setting = TalonSettings.instance.state.scopeVisualizerColorSettings.find { it.rangeType == rangeType }
+                ?: TalonSettings.scopeVisualizerColorsFromDefaults().find { it.rangeType == rangeType }
+                ?: return null
+            return Pair(
+                JBColor(setting.lightBackground, setting.darkBackground),
+                JBColor(setting.lightBorder, setting.darkBorder),
+            )
+        }
 
         private fun textAttributesFor(highlightId: String?): TextAttributes {
             val textAttributes = TextAttributes()
-            // A domain that equals its nested range is drawn in the nested range's colors
-            val scopeColors = SCOPE_VISUALIZER_COLORS[highlightId?.removeSuffix(".equalsDomain")]
+            val scopeColors = scopeVisualizerColors(highlightId)
             if (scopeColors != null) {
                 textAttributes.backgroundColor = scopeColors.first
                 textAttributes.effectColor = scopeColors.second
