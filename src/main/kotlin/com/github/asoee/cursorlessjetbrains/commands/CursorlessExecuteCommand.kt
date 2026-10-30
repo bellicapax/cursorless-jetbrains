@@ -32,8 +32,14 @@ class CursorlessExecuteCommand(project: Project, private val jsonObjects: List<J
         return ExecutionMode.EDT
     }
 
+    /** For the HTTP server, which returns text: the return value, or the whole response when it's a fallback */
     override fun execute(context: CommandContext): String {
-        return (executeForResult(context) as? JsonObject)?.get("returnValue")?.toString() ?: "OK"
+        val response = executeForResult(context) as? JsonObject
+        if (response?.containsKey("fallback") == true) {
+            // Talon has to run the fallback itself, so it mustn't look like the command was done
+            return response.toString()
+        }
+        return response?.get("returnValue")?.toString() ?: "OK"
     }
 
     override fun executeForResult(context: CommandContext): JsonElement? {
