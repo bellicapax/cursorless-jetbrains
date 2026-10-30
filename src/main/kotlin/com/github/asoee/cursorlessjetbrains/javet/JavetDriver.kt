@@ -659,6 +659,7 @@ open class JavetDriver {
         runtime.getExecutor(js).executeVoid()
     }
 
+    @Synchronized
     fun showScopeVisualizer(scopeTypeJson: String, visualizationType: String) {
         val js = """
             | (async () => {
@@ -672,6 +673,7 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    @Synchronized
     fun hideScopeVisualizer() {
         val js = """
             | (async () => {
@@ -685,6 +687,7 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    @Synchronized
     fun talonSpokenFormsChanged() {
         val js = """
             | (async () => {
@@ -717,6 +720,7 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    @Synchronized
     fun setEnabledHatShapes(enabledHatShapes: List<String>) {
         val js = """
             | (async () => {
@@ -739,6 +743,7 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    @Synchronized
     fun setHatShapePenalties(penalties: Map<String, Int>) {
         val js = """
             | (async () => {
@@ -761,6 +766,7 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    @Synchronized
     fun setEnabledHatColors(enabledHatColors: List<String>) {
         val js = """
             | (async () => {
@@ -783,6 +789,7 @@ open class JavetDriver {
         eventLoop.await()
     }
 
+    @Synchronized
     fun setHatColorPenalties(penalties: Map<String, Int>) {
         val js = """
             | (async () => {
