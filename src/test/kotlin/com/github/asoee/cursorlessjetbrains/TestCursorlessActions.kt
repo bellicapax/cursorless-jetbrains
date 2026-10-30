@@ -709,17 +709,8 @@ class TestCursorlessActions : BasePlatformTestCase() {
     @Test
     fun testGitStageUnstageAndAcceptThroughCursorless() {
         val fixture = mainJavaFixture()
-        val repo = Files.createTempDirectory("cursorless-git").toFile()
-        fun git(vararg args: String): String {
-            val process = ProcessBuilder(listOf("git") + args).directory(repo).redirectErrorStream(true).start()
-            val output = process.inputStream.bufferedReader().readText()
-            assertEquals("git ${args.joinToString(" ")}: $output", 0, process.waitFor())
-            return output
-        }
-        git("init", "-q")
-        git("config", "user.email", "test@example.com")
-        git("config", "user.name", "Test")
-        git("config", "core.autocrlf", "false")
+        val repo = gitRepo()
+        fun git(vararg args: String) = runGit(repo, *args)
         val file = File(repo, "notes.txt")
         file.writeText(listOf("one", "two", "three", "four", "five").joinToString("\n", postfix = "\n"))
         git("add", "notes.txt")
@@ -773,6 +764,74 @@ class TestCursorlessActions : BasePlatformTestCase() {
         runInEdtAndWait {
             assertEquals("theirs\nend", editor!!.document.text)
         }
+    }
+
+    @Test
+    fun testGitLineActionsKeepAByteOrderMarkAndLeaveUntrackedFilesAlone() {
+        val fixture = mainJavaFixture()
+        val repo = gitRepo()
+        fun git(vararg args: String) = runGit(repo, *args)
+        // Visual Studio and Rider save C# and C++ files with a UTF-8 byte order mark, which the document leaves out
+        val file = File(repo, "Bom.cs")
+        file.writeText("\uFEFFone\ntwo\nthree\n")
+        git("add", "Bom.cs")
+        git("commit", "-q", "-m", "first")
+        file.writeText("\uFEFFuno\ndos\nthree\n")
+        val untracked = File(repo, "New.cs")
+        untracked.writeText("new\n")
+
+        VfsRootAccess.allowRootAccess(testRootDisposable, repo.path)
+        val virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)!!
+        val untrackedFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(untracked)!!
+        var editor: Editor? = null
+        runInEdtAndWait {
+            editor = FileEditorManager.getInstance(fixture.project).openTextEditor(OpenFileDescriptor(fixture.project, virtualFile), true)
+        }
+        fun say(action: String, editor: Editor, line: Int, length: Int) {
+            val target = awaitTargetForRange(fixture, editor, CursorlessRange.fromLogicalPositions(editor, line, 0, line, length))
+            val result = fixture.projectService.cursorlessEngine.executeCommand(
+                listOf(actionCommand("""{"name": "$action", "target": ${targetJson(target)}}"""))
+            )
+            assertNull(result.error)
+        }
+
+        // Staging the first line keeps the index's byte order mark, and stages nothing else
+        say("gitStage", editor!!, 0, 3)
+        val staged = git("diff", "--cached")
+        assertTrue(staged, staged.contains("+﻿uno") && !staged.contains("dos"))
+        assertTrue(git("show", ":Bom.cs").startsWith("\uFEFFuno\n"))
+
+        // Reverting the first line doesn't put the byte order mark into the text
+        say("gitRevert", editor!!, 1, 3)
+        say("gitRevert", editor!!, 0, 3)
+        runInEdtAndWait {
+            assertEquals("uno\ntwo\nthree\n", editor!!.document.text)
+        }
+
+        // Unstaging lines of a file git doesn't track leaves it out of the index
+        var newEditor: Editor? = null
+        runInEdtAndWait {
+            newEditor = FileEditorManager.getInstance(fixture.project).openTextEditor(OpenFileDescriptor(fixture.project, untrackedFile), true)
+        }
+        say("gitUnstage", newEditor!!, 0, 3)
+        assertEquals("", git("ls-files", "New.cs"))
+    }
+
+    /** A new git repository in a temporary directory */
+    private fun gitRepo(): File {
+        val repo = Files.createTempDirectory("cursorless-git").toFile()
+        runGit(repo, "init", "-q")
+        runGit(repo, "config", "user.email", "test@example.com")
+        runGit(repo, "config", "user.name", "Test")
+        runGit(repo, "config", "core.autocrlf", "false")
+        return repo
+    }
+
+    private fun runGit(repo: File, vararg args: String): String {
+        val process = ProcessBuilder(listOf("git") + args).directory(repo).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader(Charsets.UTF_8).readText()
+        assertEquals("git ${args.joinToString(" ")}: $output", 0, process.waitFor())
+        return output
     }
 
     @Test

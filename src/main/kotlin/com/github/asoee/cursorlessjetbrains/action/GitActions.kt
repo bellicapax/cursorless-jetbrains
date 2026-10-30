@@ -15,11 +15,14 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
+import java.nio.charset.Charset
 
 /**
  * Cursorless's git actions ("git stage", "git unstage", "git accept"), as IDE actions on the editor's caret or
@@ -50,6 +53,19 @@ abstract class CursorlessGitAction : AnAction(), DumbAware {
 
     protected abstract fun perform(project: Project, editor: Editor, file: VirtualFile)
 
+    /**
+     * Runs [block], which runs git, under a cancellable progress rather than freezing the IDE while git works. Read
+     * the editor before calling it: [block] runs on a background thread.
+     */
+    protected fun <T> withGit(project: Project, block: () -> T): T =
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            ThrowableComputable<T, Exception> { block() }, "Running git", true, project,
+        )
+
+    /** A blob's text as the document has it: "\n" line breaks and no byte order mark */
+    protected fun ByteArray.documentText(charset: Charset): String =
+        toString(charset).removePrefix(BOM).replace("\r\n", "\n")
+
     /** The selected lines (0-based, inclusive), or the caret's line; a selection ending at a line start leaves it out */
     protected fun selectedLines(editor: Editor): Pair<Int, Int> {
         val document = editor.document
@@ -63,26 +79,34 @@ abstract class CursorlessGitAction : AnAction(), DumbAware {
         if (last > first && document.getLineStartOffset(last) == selection.selectionEnd) last--
         return first to last
     }
+
+    protected companion object {
+        const val BOM = "\uFEFF"
+    }
 }
 
 /** "git stage" on a whole file: git add */
 class GitStageFileAction : CursorlessGitAction() {
     override fun perform(project: Project, editor: Editor, file: VirtualFile) {
         FileDocumentManager.getInstance().saveDocument(editor.document)
-        val git = GitRunner.forFile(File(file.path))
-        git.check("add", "--", git.pathOf(File(file.path)))
+        withGit(project) {
+            val git = GitRunner.forFile(File(file.path))
+            git.check("add", "--", git.pathOf(File(file.path)))
+        }
     }
 }
 
 /** "git unstage" on a whole file: back to HEAD in the index, or out of it if the repository has no commits yet */
 class GitUnstageFileAction : CursorlessGitAction() {
     override fun perform(project: Project, editor: Editor, file: VirtualFile) {
-        val git = GitRunner.forFile(File(file.path))
-        val path = git.pathOf(File(file.path))
-        if (git.run("rev-parse", "--verify", "-q", "HEAD").exitCode == 0) {
-            git.check("restore", "--staged", "--", path)
-        } else {
-            git.check("rm", "--cached", "-q", "--", path)
+        withGit(project) {
+            val git = GitRunner.forFile(File(file.path))
+            val path = git.pathOf(File(file.path))
+            if (git.run("rev-parse", "--verify", "-q", "HEAD").exitCode == 0) {
+                git.check("restore", "--staged", "--", path)
+            } else {
+                git.check("rm", "--cached", "-q", "--", path)
+            }
         }
     }
 }
@@ -90,19 +114,24 @@ class GitUnstageFileAction : CursorlessGitAction() {
 /** Base for staging or unstaging the selected lines, by writing the file's new index version */
 abstract class GitLinesAction : CursorlessGitAction() {
     override fun perform(project: Project, editor: Editor, file: VirtualFile) {
-        val git = GitRunner.forFile(File(file.path))
-        val path = git.pathOf(File(file.path))
         val charset = file.charset
-        val indexBytes = git.blob(":$path")
-        val index = indexBytes?.toString(charset) ?: ""
-        // Compare with "\n" line breaks like the document's, and keep the index's own line breaks
-        val crlf = index.contains("\r\n")
         val (first, last) = selectedLines(editor)
-        val newIndex = newIndex(git, path, charset, index.replace("\r\n", "\n"), editor.document.text, first, last)
-        if (newIndex == index.replace("\r\n", "\n") && indexBytes != null) {
-            throw IllegalStateException(nothingToDo)
+        val working = editor.document.text
+        withGit(project) {
+            val git = GitRunner.forFile(File(file.path))
+            val path = git.pathOf(File(file.path))
+            val raw = git.blob(":$path")?.toString(charset) ?: ""
+            // Compare as the document has it, then keep the index's own line breaks and byte order mark
+            val index = raw.removePrefix(BOM).replace("\r\n", "\n")
+            val newIndex = newIndex(git, path, charset, index, working, first, last)
+            // Also when the file isn't in the index, which would otherwise gain an empty copy
+            if (newIndex == index) {
+                throw IllegalStateException(nothingToDo)
+            }
+            val text = (if (raw.startsWith(BOM)) BOM else "") +
+                if (raw.contains("\r\n")) newIndex.replace("\n", "\r\n") else newIndex
+            git.writeIndex(path, text.toByteArray(charset))
         }
-        git.writeIndex(path, (if (crlf) newIndex.replace("\n", "\r\n") else newIndex).toByteArray(charset))
     }
 
     protected abstract val nothingToDo: String
@@ -128,7 +157,7 @@ class GitUnstageLinesAction : GitLinesAction() {
     override fun newIndex(
         git: GitRunner, path: String, charset: java.nio.charset.Charset, index: String, working: String, first: Int, last: Int,
     ): String {
-        val head = git.blob("HEAD:$path")?.toString(charset)?.replace("\r\n", "\n") ?: ""
+        val head = git.blob("HEAD:$path")?.documentText(charset) ?: ""
         return GitLines.unstage(head, index, working, first, last)
     }
 }
@@ -139,16 +168,22 @@ class GitUnstageLinesAction : GitLinesAction() {
  */
 class GitRevertLinesAction : CursorlessGitAction() {
     override fun perform(project: Project, editor: Editor, file: VirtualFile) {
-        val git = try {
-            GitRunner.forFile(File(file.path))
-        } catch (_: GitRunner.GitException) {
+        val staged = withGit(project) {
+            val git = try {
+                GitRunner.forFile(File(file.path))
+            } catch (_: GitRunner.GitException) {
+                return@withGit null
+            }
+            val path = git.pathOf(File(file.path))
+            git.blob(":$path")?.documentText(file.charset)
+                ?: throw IllegalStateException("${file.name} isn't tracked by git")
+        }
+        if (staged == null) {
             val rollback = ActionManager.getInstance().getAction("Vcs.RollbackChangedLines")
+                ?: throw IllegalStateException("${file.name} isn't in a git repository")
             ActionManager.getInstance().tryToExecute(rollback, null, editor.contentComponent, ActionPlaces.UNKNOWN, true)
             return
         }
-        val path = git.pathOf(File(file.path))
-        val staged = git.blob(":$path")?.toString(file.charset)?.replace("\r\n", "\n")
-            ?: throw IllegalStateException("${file.name} isn't tracked by git")
         val document = editor.document
         val (first, last) = selectedLines(editor)
         val reverted = GitLines.revert(staged, document.text, first, last)
