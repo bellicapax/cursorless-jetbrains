@@ -1,8 +1,7 @@
 package com.github.asoee.cursorlessjetbrains.javet
 
 import com.github.asoee.cursorlessjetbrains.tutorial.TutorialFixtures
-import com.intellij.openapi.extensions.PluginId
-import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.caoccao.javet.annotations.V8Function
 import com.github.asoee.cursorlessjetbrains.cursorless.*
 import com.github.asoee.cursorlessjetbrains.sync.HatRange
@@ -348,9 +347,9 @@ class IdeClientCallback {
 
     @V8Function
     fun pluginVersion(): String {
-        return runCatching {
-            PluginManagerCore.getPlugin(PluginId.getId("com.github.asoee.cursorlessjetbrains"))?.version
-        }.getOrNull() ?: "unknown"
+        // From the plugin's own class loader: looking the plugin up by id is internal API, which verification rejects
+        return (IdeClientCallback::class.java.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.version
+            ?: "unknown"
     }
 
     @V8Function
