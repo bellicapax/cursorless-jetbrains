@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -66,7 +67,12 @@ import java.util.*
 import kotlin.time.Duration.Companion.milliseconds
 
 
-class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDisposable: Disposable, cs: CoroutineScope) :
+class EditorManager(
+    val project: Project,
+    private var cursorlessEngine: CursorlessEngine,
+    parentDisposable: Disposable,
+    cs: CoroutineScope,
+) :
     Disposable {
 
     private var hatsEnabled = true
@@ -681,8 +687,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         }
 
         override fun openSnippetFile(snippetName: String, directory: String): String {
-            val project = editorManager.editorsById.values.firstNotNullOfOrNull { it.project }
-                ?: throw IllegalStateException("No project to open the snippet in")
+            val project = editorManager.project
             val path = Paths.get(directory, "$snippetName.snippet")
             Files.createDirectories(path.parent)
             if (!Files.exists(path)) {
@@ -708,8 +713,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
         }
 
         override fun openUntitledTextDocument(content: String, language: String?): String {
-            val project = editorManager.editorsById.values.firstNotNullOfOrNull { it.project }
-                ?: throw IllegalStateException("No project to open the document in")
+            val project = editorManager.project
             val extension = language?.let { extensionForLanguage(it) } ?: "txt"
             var result: JsonObject? = null
             ApplicationManager.getApplication().invokeAndWait {
@@ -745,7 +749,7 @@ class EditorManager(private var cursorlessEngine: CursorlessEngine, parentDispos
                 "warning" -> NotificationType.WARNING
                 else -> NotificationType.INFORMATION
             }
-            val project = editorManager.editorsById.values.firstNotNullOfOrNull { it.project }
+            val project = editorManager.project
             NotificationGroupManager.getInstance().getNotificationGroup("Cursorless")
                 .createNotification("Cursorless", message, notificationType)
                 .notify(project)

@@ -62,7 +62,7 @@ class TalonProjectService(private val project: Project, private val cs: Coroutin
         val (driver, engine) = createV8EngineAndCursorless()
         this.jsDriver = driver
         this.cursorlessEngine = engine
-        this.editorManager = EditorManager(cursorlessEngine, this, cs)
+        this.editorManager = EditorManager(project, cursorlessEngine, this, cs)
         this.editorManager.tutorialStateListener = { project.service<CursorlessTutorial>().stateChanged(it) }
         this.editorManager.scopeListListener = { project.service<CursorlessScopeList>().changed(it) }
         this.focusChangeListener = TalonFocusChangeListener(editorManager, project)
