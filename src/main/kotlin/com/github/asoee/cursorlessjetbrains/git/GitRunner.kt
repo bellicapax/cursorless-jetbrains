@@ -1,11 +1,13 @@
 package com.github.asoee.cursorlessjetbrains.git
 
+import com.intellij.openapi.progress.ProgressManager
 import java.io.File
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 /**
- * Runs git (from the PATH) in a file's repository, for the git actions. A plain process rather than the IDE's
- * process helpers, which refuse to run synchronously on the EDT, where IDE actions run.
+ * Runs git (from the PATH) in a file's repository, for the git actions, which call it under a cancellable progress
+ * so the IDE doesn't freeze. A plain process, so the plugin doesn't need the Git plugin.
  */
 class GitRunner private constructor(val root: File) {
 
@@ -31,14 +33,24 @@ class GitRunner private constructor(val root: File) {
             } catch (e: java.io.IOException) {
                 throw GitException("Couldn't run git: ${e.message}")
             }
-            process.outputStream.use { input -> stdin?.let { input.write(it) } }
-            val stdout = process.inputStream.readBytes()
-            val stderr = process.errorStream.bufferedReader().readText()
-            if (!process.waitFor(30, TimeUnit.SECONDS)) {
+            // Drain both pipes while git runs, so neither fills and blocks it, and so the timeout can fire
+            val stdout = CompletableFuture.supplyAsync { process.inputStream.readBytes() }
+            val stderr = CompletableFuture.supplyAsync { process.errorStream.bufferedReader().readText() }
+            try {
+                process.outputStream.use { input -> stdin?.let { input.write(it) } }
+                val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30)
+                while (!process.waitFor(100, TimeUnit.MILLISECONDS)) {
+                    // Cancelling the action's progress stops git too
+                    ProgressManager.checkCanceled()
+                    if (System.nanoTime() > deadline) {
+                        throw GitException("git ${args.firstOrNull()} timed out")
+                    }
+                }
+            } catch (e: Throwable) {
                 process.destroyForcibly()
-                throw GitException("git ${args.firstOrNull()} timed out")
+                throw e
             }
-            return Result(process.exitValue(), stdout, stderr.trim())
+            return Result(process.exitValue(), stdout.join(), stderr.join().trim())
         }
     }
 
