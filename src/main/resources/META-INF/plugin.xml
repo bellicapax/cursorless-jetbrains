@@ -14,6 +14,8 @@
                 implementation="com.github.asoee.cursorlessjetbrains.listeners.TalonEditorFactoryListener"/>
 
         <notificationGroup id="vc-idea" displayType="BALLOON"/>
+        <!-- Engine messages and command errors, apart from vc-idea's startup notices so silencing those keeps these -->
+        <notificationGroup id="Cursorless" displayType="BALLOON"/>
 
         <applicationService
                 serviceImplementation="com.github.asoee.cursorlessjetbrains.settings.TalonSettings"/>
