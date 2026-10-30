@@ -839,7 +839,6 @@ class PromiseCallback : IV8ValuePromise.IListener {
         success = false
         if (v8Value is V8ValueError) {
             val v8ValueError = v8Value as V8ValueError
-            error = v8ValueError.toString()
             logger.warn("error in execute - $v8ValueError")
             error = v8ValueError.message
         } else if (v8Value is V8ValueString) {

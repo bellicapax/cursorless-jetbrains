@@ -3,6 +3,7 @@ package com.github.asoee.cursorlessjetbrains.action
 import com.github.asoee.cursorlessjetbrains.git.ConflictMarkers
 import com.github.asoee.cursorlessjetbrains.git.GitLines
 import com.github.asoee.cursorlessjetbrains.git.GitRunner
+import com.github.asoee.cursorlessjetbrains.util.replaceChangedPart
 import com.github.asoee.cursorlessjetbrains.util.requireWritable
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -192,15 +193,8 @@ class GitRevertLinesAction : CursorlessGitAction() {
         }
         requireWritable(editor)
         // Replace only the text that differs, so carets elsewhere stay where they are
-        val old = document.charsSequence
-        var start = 0
-        while (start < old.length && start < reverted.length && old[start] == reverted[start]) start++
-        var suffix = 0
-        while (suffix < old.length - start && suffix < reverted.length - start &&
-            old[old.length - 1 - suffix] == reverted[reverted.length - 1 - suffix]
-        ) suffix++
         WriteCommandAction.runWriteCommandAction(project, "Revert Lines", null, {
-            document.replaceString(start, old.length - suffix, reverted.substring(start, reverted.length - suffix))
+            replaceChangedPart(document, 0, document.textLength, reverted)
         })
     }
 }

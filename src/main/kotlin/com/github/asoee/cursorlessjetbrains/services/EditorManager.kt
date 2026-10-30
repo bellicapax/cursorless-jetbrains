@@ -35,8 +35,6 @@ import com.intellij.testFramework.LightVirtualFile
 import com.github.asoee.cursorlessjetbrains.sync.selectionFromCaretState
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
-import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.DocumentEvent
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonArray
@@ -45,6 +43,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import com.github.asoee.cursorlessjetbrains.util.extensionForLanguage
 import com.github.asoee.cursorlessjetbrains.util.isInTerminal
+import com.github.asoee.cursorlessjetbrains.util.recordDocumentChanges
+import com.github.asoee.cursorlessjetbrains.util.replaceChangedPart
 import com.github.asoee.cursorlessjetbrains.util.requireWritable
 import com.github.asoee.cursorlessjetbrains.settings.CursorlessKeyValueStore
 import java.awt.KeyboardFocusManager
@@ -292,25 +292,11 @@ class EditorManager(
     fun clipboardPaste(editorId: String): String? {
         val editor = editorsById[editorId] ?: return null
         logger.debug("launch action : clipboardPaste")
-        val changes = mutableListOf<JsonObject>()
+        var changes = emptyList<JsonObject>()
         ApplicationManager.getApplication().invokeAndWait {
             val actionManager = ActionManager.getInstance()
             val pasteAction = actionManager.getAction(IdeActions.ACTION_EDITOR_PASTE_SIMPLE)
-            val recorder = Disposer.newDisposable()
-            editor.document.addDocumentListener(object : DocumentListener {
-                override fun documentChanged(event: DocumentEvent) {
-                    changes.add(
-                        JsonObject(
-                            mapOf(
-                                "rangeOffset" to JsonPrimitive(event.offset),
-                                "rangeLength" to JsonPrimitive(event.oldLength),
-                                "text" to JsonPrimitive(event.newFragment.toString()),
-                            )
-                        )
-                    )
-                }
-            }, recorder)
-            try {
+            changes = recordDocumentChanges(editor.document) {
                 // The paste action's own command nests inside this one, so it joins the Cursorless command's undo step
                 CommandProcessor.getInstance().executeCommand(
                     editor.project,
@@ -326,8 +312,6 @@ class EditorManager(
                     "Paste",
                     undoGroupId
                 )
-            } finally {
-                Disposer.dispose(recorder)
             }
         }
         return JsonArray(changes).toString()
@@ -374,30 +358,11 @@ class EditorManager(
      * the document right after "pour".
      */
     fun recordingIdeEdits(editor: Editor, block: () -> Unit): String {
-        val changes = java.util.Collections.synchronizedList(mutableListOf<JsonObject>())
-        val recorder = Disposer.newDisposable()
-        editor.document.addDocumentListener(object : DocumentListener {
-            override fun documentChanged(event: DocumentEvent) {
-                changes.add(
-                    JsonObject(
-                        mapOf(
-                            "rangeOffset" to JsonPrimitive(event.offset),
-                            "rangeLength" to JsonPrimitive(event.oldLength),
-                            "text" to JsonPrimitive(event.newFragment.toString()),
-                        )
-                    )
-                )
-            }
-        }, recorder)
-        try {
-            block()
-        } finally {
-            Disposer.dispose(recorder)
-        }
+        val changes = recordDocumentChanges(editor.document, block)
         val selections = editorIds[editor]?.let { selectionsJson(it) }
         return JsonObject(
             mapOf(
-                "changes" to JsonArray(changes.toList()),
+                "changes" to JsonArray(changes),
                 "selections" to (selections?.let { Json.parseToJsonElement(it) } ?: JsonArray(emptyList())),
             )
         ).toString()
@@ -413,27 +378,6 @@ class EditorManager(
             }
         }
         return json
-    }
-
-    /**
-     * Replaces [start, end) with [text], touching only the part that differs. Replacing text with the same text moves
-     * the IDE's carets (VS Code keeps them), e.g. when the tutorial rewrites its document to set up the next step.
-     */
-    private fun replaceChangedPart(document: Document, start: Int, end: Int, text: String) {
-        val old = document.charsSequence.subSequence(start, end)
-        val maxLength = minOf(old.length, text.length)
-        var prefix = 0
-        while (prefix < maxLength && old[prefix] == text[prefix]) {
-            prefix++
-        }
-        var suffix = 0
-        while (suffix < maxLength - prefix && old[old.length - 1 - suffix] == text[text.length - 1 - suffix]) {
-            suffix++
-        }
-        if (prefix + suffix == old.length && prefix + suffix == text.length) {
-            return
-        }
-        document.replaceString(start + prefix, end - suffix, text.substring(prefix, text.length - suffix))
     }
 
     /**
