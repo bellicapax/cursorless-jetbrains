@@ -819,7 +819,8 @@ class TestCursorlessActions : BasePlatformTestCase() {
 
     /** A new git repository in a temporary directory */
     private fun gitRepo(): File {
-        val repo = Files.createTempDirectory("cursorless-git").toFile()
+        // The real path, which the VFS uses: on macOS the temp folder is a symlink (/var -> /private/var)
+        val repo = Files.createTempDirectory("cursorless-git").toRealPath().toFile()
         runGit(repo, "init", "-q")
         runGit(repo, "config", "user.email", "test@example.com")
         runGit(repo, "config", "user.name", "Test")
