@@ -756,8 +756,10 @@ class TestCursorlessActions : BasePlatformTestCase() {
         assertTrue(all, all.contains("+bravo") && !all.contains("alpha"))
 
         // "git accept" keeps the side of a conflict the target is in
-        WriteCommandAction.runWriteCommandAction(fixture.project) {
-            editor!!.document.setText(listOf("<<<<<<< HEAD", "mine", "=======", "theirs", ">>>>>>> feature", "end").joinToString("\n"))
+        editAndAwaitHats(fixture, editor!!) {
+            WriteCommandAction.runWriteCommandAction(fixture.project) {
+                editor!!.document.setText(listOf("<<<<<<< HEAD", "mine", "=======", "theirs", ">>>>>>> feature", "end").joinToString("\n"))
+            }
         }
         val theirs = awaitTargetForRange(fixture, editor!!, CursorlessRange.fromLogicalPositions(editor!!, 3, 0, 3, 6))
         say("gitAccept", targetJson(theirs))
@@ -1270,8 +1272,10 @@ class TestCursorlessActions : BasePlatformTestCase() {
         val opened = mutableListOf<String>()
         fixture.projectService.editorManager.urlOpener = { opened.add(it) }
         val document = fixture.editor.document
-        WriteCommandAction.runWriteCommandAction(fixture.project) {
-            document.insertString(0, "// See https://example.com/docs.\n")
+        editAndAwaitHats(fixture, fixture.editor) {
+            WriteCommandAction.runWriteCommandAction(fixture.project) {
+                document.insertString(0, "// See https://example.com/docs.\n")
+            }
         }
         val column = document.getText().indexOf("example")
         val target = awaitTargetForRange(
@@ -1468,6 +1472,27 @@ class TestCursorlessActions : BasePlatformTestCase() {
         }
     }
 
+
+    /**
+     * Runs [edit], which changes [editor]'s document directly, and waits until the engine has redrawn the hats for the
+     * new text. Otherwise [awaitTargetForRange] can take a hat left over from the old text, which the engine then can't
+     * find or finds on another token (seen on the slower macOS runners).
+     */
+    private fun editAndAwaitHats(fixture: MainJavaFixture, editor: Editor, edit: () -> Unit) {
+        val editorManager = fixture.projectService.editorManager
+        val before = editorManager.getEditorHats(editor)
+        edit()
+        await.atMost(5, TimeUnit.SECONDS).until { editorManager.getEditorHats(editor) !== before }
+        // A redraw that started before the edit can land after it, so wait until the hats stop changing
+        var last = editorManager.getEditorHats(editor)
+        await.atMost(5, TimeUnit.SECONDS).pollDelay(300, TimeUnit.MILLISECONDS).pollInterval(300, TimeUnit.MILLISECONDS)
+            .until {
+                val now = editorManager.getEditorHats(editor)
+                val settled = now === last
+                last = now
+                settled
+            }
+    }
 
     private fun awaitTargetForRange(
         fixture: MainJavaFixture,
