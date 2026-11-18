@@ -377,6 +377,15 @@ open class JavetDriver {
         var success = false
         var error: String? = null
 
+        // Rejections from between commands (e.g. an editor closing while the debugger starts) aren't this command's
+        // failure; log them and only fail it for rejections raised while it runs
+        if (ideClientCallback.unhandledRejections.isNotEmpty()) {
+            ideClientCallback.unhandledRejections.forEach {
+                logger.warn("Unhandled rejection between commands: $it")
+            }
+            ideClientCallback.unhandledRejections.clear()
+        }
+
         try {
             val json = Json.encodeToString(commands[0])
             logger.debug("command json $json")

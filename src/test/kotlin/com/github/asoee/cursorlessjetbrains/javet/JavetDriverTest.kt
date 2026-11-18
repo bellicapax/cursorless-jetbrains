@@ -9,8 +9,11 @@ import com.github.asoee.cursorlessjetbrains.sync.Cursor
 import com.github.asoee.cursorlessjetbrains.sync.EditorState
 import com.github.asoee.cursorlessjetbrains.sync.HatRange
 import com.github.asoee.cursorlessjetbrains.sync.Selection
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.lessThanOrEqualTo
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class JavetDriverTest {
@@ -69,6 +72,34 @@ class JavetDriverTest {
         driver.gc()
         driver.dumpMemoryInfo()
         assertThat(driver.runtime.referenceCount, lessThanOrEqualTo(3))
+        driver.close()
+    }
+
+    @Test
+    fun testRejectionBetweenCommandsDoesNotFailNextCommand() {
+        val driver = JavetDriver()
+        driver.loadCursorless()
+        driver.setCursorlessCallback(CountingCallback())
+        val cursorPos = Cursor(0, 0)
+        val selection = Selection(start = cursorPos, end = cursorPos, cursorPosition = cursorPos, active = cursorPos, anchor = cursorPos)
+        driver.editorChanged(
+            EditorState(
+                id = "test", path = "/test/foo", text = "hello world", active = true, languageId = "plaintext",
+                firstVisibleLine = 0, lastVisibleLine = 0, cursors = listOf(cursorPos), selections = listOf(selection),
+                visible = true, editable = true, writable = true, tabSize = 4, insertSpaces = true,
+            )
+        )
+
+        // As the engine reports a promise that failed in the background, between commands
+        driver.runtime.getExecutor("ideClient.unhandledRejection('stale background error')").executeVoid()
+
+        val command = Json.parseToJsonElement(
+            """{"version": 7, "spokenForm": "take this", "usePrePhraseSnapshot": false,
+               "action": {"name": "setSelection", "target": {"type": "primitive", "mark": {"type": "cursor"}}}}"""
+        ).jsonObject
+        val result = driver.execute(listOf(command))
+
+        assertTrue("Command failed: ${result.error}", result.success)
         driver.close()
     }
 
