@@ -27,6 +27,7 @@
 - Undo, flashes, `give` and hover in Rider
 - `pour` indents the new line in Rider, where the IDE has no indenter for C++ and C#
 - Deadlocks between the scope visualizer and the IDE; every engine call now holds the engine lock
+- A background engine error (e.g. while the debugger starts) no longer makes the next command fail; it's logged instead
 
 ## [0.1.3] - 2026-09-25
 
